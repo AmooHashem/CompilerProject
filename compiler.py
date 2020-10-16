@@ -160,3 +160,9 @@ if __name__ == '__main__':
                     handle_next_line(2, len(all_IDS_or_KEYWORDS), symbols)
                     symbols.write(f'{token[1]}')
         char = get_char()
+
+    for keyword in KEYWORD:
+        if not keyword in all_IDS_or_KEYWORDS:
+            all_IDS_or_KEYWORDS.append(keyword)
+            handle_next_line(2, len(all_IDS_or_KEYWORDS), symbols)
+            symbols.write(f'{keyword}')
