@@ -117,7 +117,7 @@ def handle_comment(char):
             if len(comment) >= 2 and comment[len(comment) - 2:] == '*/':
                 return
             char = get_char()
-        return 'error', 'Unclosed comment', comment[0:7]
+        return 'error', 'Unclosed comment', comment[0:7] #three dots
 
 
 ###############################
@@ -128,8 +128,22 @@ def handle_next_line(index, lineno, writer):
         if last_lines[index] != 0:
             writer.write('\n')
         last_lines[index] = lineno
-        writer.write(f'{lineno}.\t\t')
+        writer.write(f'{lineno}.\t')
+        return True
+    return False
 
+def handle_space(is_needed, writer):
+    if is_needed:
+        writer.write(f' ')    
+                
+
+#'get_next_token'
+#remove white spaces
+#There is no lexical error
+#Unmatched */
+errors.truncate(0)
+tokens.truncate(0)
+symbols.truncate(0)
 
 if __name__ == '__main__':
 
@@ -149,11 +163,13 @@ if __name__ == '__main__':
 
         if token:
             if token[0] == 'error':
-                handle_next_line(0, lineno, errors)
-                errors.write(f'({token[2]}, {token[1]}) ')
+                is_new_line = handle_next_line(0, lineno, errors)
+                handle_space(not is_new_line, errors)
+                errors.write(f'({token[2]}, {token[1]})')
             if token[0] != 'error':
-                handle_next_line(1, lineno, tokens)
-                tokens.write(f'({token[0]}, {token[1]}) ')
+                is_new_line = handle_next_line(1, lineno, tokens)
+                handle_space(not is_new_line, tokens)
+                tokens.write(f'({token[0]}, {token[1]})')
             if token[0] == 'ID' or token[0] == 'KEYWORD':
                 if not token[1] in all_IDS_or_KEYWORDS:
                     all_IDS_or_KEYWORDS.append(token[1])
