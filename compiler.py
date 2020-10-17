@@ -119,6 +119,8 @@ def handle_comment(char):
             char = get_char()
         return 'error', 'Unclosed comment', comment[0:7] #three dots
 
+def handle_invalid_input(char):
+    return 'error', 'Invalid input', char
 
 ###############################
 
@@ -152,14 +154,16 @@ if __name__ == '__main__':
         token = ''
         if char in WHITESPACES:
             handle_whitespace(char)
-        if char in ALPHABET:
+        elif char in ALPHABET:
             token = handle_keyword_and_id(char)
-        if char in SYMBOL:
+        elif char in SYMBOL:
             token = handle_symbol(char)
-        if char in DIGIT:
+        elif char in DIGIT:
             token = handle_digit(char)
-        if char in COMMENT:
+        elif char in COMMENT:
             token = handle_comment(char)
+        else:
+            token = handle_invalid_input(char)
 
         if token:
             if token[0] == 'error':
