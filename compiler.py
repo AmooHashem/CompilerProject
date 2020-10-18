@@ -117,7 +117,7 @@ def handle_comment(char):
             if len(comment) >= 2 and comment[len(comment) - 2:] == '*/':
                 return
             char = get_char()
-        return 'error', 'Unclosed comment', comment[0:7] #three dots
+        return 'error', 'Unclosed comment', '/*' + comment[0:min(5, len(comment) -1)] + '...'
 
 def handle_invalid_input(char):
     return 'error', 'Invalid input', char
