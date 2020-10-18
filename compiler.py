@@ -9,7 +9,6 @@ iterator = 0
 last_lines = [0, 0, 0]
 lineno = 1
 all_IDS_or_KEYWORDS = []
-
 WHITESPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 SYMBOL = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<']
 KEYWORD = ['if', 'else', 'void', 'int', 'while', 'break', 'switch', 'default', 'case', 'return', ]
@@ -126,6 +125,24 @@ def handle_comment(char):
 def handle_invalid_input(char):
     return 'error', 'Invalid input', char
 
+
+def get_next_token(char):
+    token = ''
+    if char in WHITESPACES:
+        handle_whitespace(char)
+    elif char in ALPHABET:
+        token = handle_keyword_and_id(char)
+    elif char in SYMBOL:
+        token = handle_symbol(char)
+    elif char in DIGIT:
+        token = handle_digit(char)
+    elif char in COMMENT:
+        token = handle_comment(char)
+    else:
+        token = handle_invalid_input(char)
+
+    return token
+
 ###############################
 
 def handle_next_line(index, lineno, writer):
@@ -155,20 +172,7 @@ if __name__ == '__main__':
 
     char = get_char()
     while char != 'EOF':
-        token = ''
-        if char in WHITESPACES:
-            handle_whitespace(char)
-        elif char in ALPHABET:
-            token = handle_keyword_and_id(char)
-        elif char in SYMBOL:
-            token = handle_symbol(char)
-        elif char in DIGIT:
-            token = handle_digit(char)
-        elif char in COMMENT:
-            token = handle_comment(char)
-        else:
-            token = handle_invalid_input(char)
-
+        token = get_next_token(char)
         if token:
             if token[0] == 'error':
                 is_new_line = handle_next_line(0, lineno, errors)
