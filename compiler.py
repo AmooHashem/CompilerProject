@@ -119,6 +119,10 @@ def handle_comment(char):
             char = get_char()
         return 'error', 'Unclosed comment', '/*' + comment[0:min(5, len(comment) -1)] + '...'
 
+    star_char()
+    return 'error', 'Invalid input', '/'
+
+
 def handle_invalid_input(char):
     return 'error', 'Invalid input', char
 

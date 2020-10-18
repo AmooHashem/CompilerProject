@@ -13,4 +13,5 @@ void main ( void ) {
         b = a < cde;
         {cde = @2;
     }}
-    return;/* c"LDfsd
+    return;/* comment 3
+}
