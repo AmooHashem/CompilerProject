@@ -1,33 +1,56 @@
-int count;
-int result[50];
-
-
-int f(int a, int result[#]) {
-    count = count + 1;
-    if(result[a - 1]){
-        return result[a - 1];
-    } else {
-        if (a == 1) {
-            result[a - 1] = 1;
-            return 1;
-        } else if (a ===== 2){
-            result[a - 1] = 1;
-            return 1;
-        } else {
-            result[a - 1] = f(a - 2, result) + f(a - 1, result);
-            return result[a - 1];
-        }
-    }
+int b;
+int foo(int d, int e){
+    int f;
+	void foo2(int k[]){
+		return k[0] + k[1];	
+	}
+	int fff[2];
+	fff[0] = d;
+	fff[1] = d + 1;
+	f = foo2(fff);
+	b = e + f;
+	while(d < 0){
+		f = f + d;
+		d = d - 1;
+		if (d == )
+			break;
+		else d = 1;
+	}
+	//comment1
+	return f + b;
+}
+int arr[3];
+void main(void){
+	int a;
+	a = -3 + +11;
+	b = 5 * a + foo(a, a);
+	arr[1] = b + -3;
+	arr[2] = foo(arr[0], arr[1]);
+	if (b /*comment2*/ == 3){
+		arr[0] = -7;	
+	}
+	else
+	{
+		switch (arr[2]){
+			case 2:
+				b = b + 1;
+			case 3:
+				b = b + 2;
+				return;
+			case :
+			{
+				u = 5;
+				b = u * -123;
+				break;}
+			default:
+				b = b - -1;
+		}	
+	}
+	return;
 }
 
-void main(void$) {
-    int i;
-    i = 0;
-    while (i < 50) {
-        result[i] = 0;
-        i = i + 1;
-    }
-    count = 0;
-    output(f(40, result));
-    output(count);
+int foo(int d, int e){
+    int a;
+    a = 5;
+    while (a < 10) if (a == 5) break; else a = a + 1;
 }

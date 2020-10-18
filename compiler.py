@@ -160,16 +160,12 @@ def handle_space(is_needed, writer):
         writer.write(f' ')    
                 
 
-#'get_next_token'
-#remove white spaces
-#There is no lexical error
-#Unmatched */
 errors.truncate(0)
 tokens.truncate(0)
 symbols.truncate(0)
 
 if __name__ == '__main__':
-
+    there_is_lexical_errors = False
     char = get_char()
     while char != 'EOF':
         token = get_next_token(char)
@@ -178,6 +174,7 @@ if __name__ == '__main__':
                 is_new_line = handle_next_line(0, lineno, errors)
                 handle_space(not is_new_line, errors)
                 errors.write(f'({token[2]}, {token[1]})')
+                there_is_lexical_errors = True
             if token[0] != 'error':
                 is_new_line = handle_next_line(1, lineno, tokens)
                 handle_space(not is_new_line, tokens)
@@ -188,6 +185,9 @@ if __name__ == '__main__':
                     handle_next_line(2, len(all_IDS_or_KEYWORDS), symbols)
                     symbols.write(f'{token[1]}')
         char = get_char()
+
+    if not there_is_lexical_errors:
+        errors.write(f'There is no lexical error.')
 
     for keyword in KEYWORD:
         if not keyword in all_IDS_or_KEYWORDS:

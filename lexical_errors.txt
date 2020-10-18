@@ -1,2 +1,1 @@
-5.	(#, Invalid input)
-23.	(void$, Invalid input)
+There is no lexical error.
