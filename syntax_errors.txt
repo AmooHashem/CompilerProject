@@ -1,1 +1,4 @@
-#11 : syntax error, missing Arg-list-prime
+#19 : syntax error, missing ]
+#19 : syntax error, missing ;
+#19 : syntax error, illegal )
+#19 : syntax error, illegal ]

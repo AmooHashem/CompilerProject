@@ -11,7 +11,6 @@ grammar = open('pa2grammar.txt', 'r').read()
 sentences = re.split('\n', grammar)
 for i in range(0, len(sentences)):
     sentences[i] = re.split(' -> | ', sentences[i])
-sentences.pop() ##
 # find T and NTs
 for sentence in sentences:
     non_terminals_set.add(sentence[0])
@@ -99,17 +98,23 @@ for non_terminal in non_terminals_set:
     for terminal in follows[non_terminal]:
         if terminal not in ll1_table[non_terminal]:
             ll1_table[non_terminal][terminal] = 'synch'
+
 #error
 errors = open('syntax_errors.txt', 'a')
 errors.truncate(0)
 errors.write(f'There is no syntax error.')
-
+no_error = True
 def handle_error(text):
-    errors.truncate(0)
+    global no_error
+    if no_error:
+        errors.truncate(0)
+        no_error = False
     errors.write(f'#{get_line_number()} : syntax error, {text}\n')
+
 #tree
 class Tree_node():
-    def __init__(self, value, width=0):
+    def __init__(self, value, width=0, parent=None):
+        self.parent = parent
         self.value = value
         self.childs = []
         self.width = width
@@ -134,7 +139,7 @@ class Tree_node():
 
     def show(self):
         if self.is_terminal:
-            return "(" + self.token[0] + ", " + self.token[1] + ")"
+            return "(" + self.token[0] + ", " + self.token[1] + ") "
         if self.value == 'ε':
             return 'epsilon'
         return self.value
@@ -163,7 +168,7 @@ while True:
         a = current_tocken[0]
     elif current_tocken == '$':
         a = current_tocken
-
+    
     if X == 'ε':
         stack.pop()
     elif X == a and a == '$':
@@ -174,7 +179,8 @@ while True:
         current_tocken = get_next_token()
     elif X != a and X in terminal_set:
         handle_error('missing ' + X)
-        stack.pop()
+        node = stack.pop()
+        all_nodes.remove(node)
     elif a not in ll1_table[X]:
         if a == '$':
             handle_error('unexpected EOF')
@@ -183,7 +189,13 @@ while True:
         current_tocken = get_next_token()
     elif ll1_table[X][a] == 'synch':
         handle_error('missing ' + X)
-        stack.pop()
+        node = stack.pop()
+        all_nodes.remove(node)
+        try:
+            node.parent.childs.remove(node)
+        except:
+            pass
+        
     else:
         sentence = sentences[ll1_table[X][a]]
         node = stack.pop()
@@ -191,7 +203,7 @@ while True:
         if len(sentence) == 1: ##
             all_nodes.remove(node)
         for index in range(len(sentence)-1, 0, -1):
-            new_node = Tree_node(sentence[index])
+            new_node = Tree_node(sentence[index], parent=node)
             all_nodes.append(new_node)
             stack.append(new_node)
             node.add_child(new_node)
