@@ -115,6 +115,8 @@ class Tree_node():
         self.width = width
         self.depth = 0
         self.height = 0
+        self.is_terminal = False
+        self.token = None
     
     def add_child(self, child):
         self.childs.append(child)
@@ -125,6 +127,15 @@ class Tree_node():
     
     def __str__(self):
         return str(self.value) + " " + str(self.width) + " " + str(self.depth)
+
+    def set_token(self, token):
+        self.token = token
+        self.is_terminal = True
+
+    def show(self):
+        if self.is_terminal:
+            return "(" + self.token[0] + ", " + self.token[1] + ")"
+        return self.value
 
 #ll1
 head_node = Tree_node('Program')
@@ -137,7 +148,8 @@ for index in range(0, len(sentences)):
         sentences[index].pop()
 
 while True:
-    X = stack[len(stack)-1].value
+    X_node = stack[len(stack)-1]
+    X = X_node.value
     if current_tocken[0] == 'SYMBOL':
         a = current_tocken[1]
     elif current_tocken[0] == 'ID':
@@ -153,6 +165,7 @@ while True:
         break
     elif X == a and X in terminal_set:
         stack.pop()
+        X_node.set_token(current_tocken)
         current_tocken = get_next_token()
     elif X != a and X in terminal_set:
         handle_error('missing ' + X)
@@ -199,10 +212,11 @@ parse_tree.truncate(0)
 
 def draw_tree():
     for node in all_nodes:
+        print(node)
         for counter in range(0, node.width - 1):
             parse_tree.write(f'│   ')
         if node.width != 0:
             parse_tree.write(f'├── ')
-        parse_tree.write(f'{node.value}\n')
+        parse_tree.write(f'{node.show()}\n')
 
 draw_tree()
