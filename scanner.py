@@ -23,7 +23,7 @@ VALID_CHARACTERS = WHITESPACES + SYMBOL + ALPHABET + DIGIT + COMMENT
 def get_char():
     global iterator, input_size, input
     if iterator == input_size:
-        return '$'
+        return 'EOF'
     iterator += 1
     return input[iterator - 1]
 
@@ -32,6 +32,9 @@ def star_char():
     global iterator
     iterator -= 1
 
+def get_line_number():
+    global lineno
+    return lineno
 
 def handle_whitespace(white_space):
     global lineno
@@ -123,7 +126,10 @@ def handle_invalid_input(char):
     return 'error', 'Invalid input', char
 
 
-def get_next_token(char):
+def get_next_token():
+    char = get_char()
+    if char == 'EOF':
+        return '$'
     token = ''
     if char in WHITESPACES:
         handle_whitespace(char)
@@ -137,9 +143,10 @@ def get_next_token(char):
         token = handle_comment(char)
     else:
         token = handle_invalid_input(char)
-
-    return token
-
+    if token and token[0] != 'error':
+        return token
+    else:
+        return get_next_token()
 ###############################
 
 def handle_next_line(index, lineno, writer):

@@ -1,0 +1,20 @@
+Program
+├── Declaration-list
+│   ├── Declaration
+│   │   ├── Declaration-initial
+│   │   │   ├── Type-specifier
+│   │   │   │   ├── void
+│   │   │   ├── ID
+│   │   ├── Declaration-prime
+│   │   │   ├── Fun-declaration-prime
+│   │   │   │   ├── (
+│   │   │   │   ├── Params
+│   │   │   │   │   ├── void
+│   │   │   │   │   ├── Param-list-void-abtar
+│   │   │   │   │   │   ├── ID
+│   │   │   │   │   │   ├── Param-prime
+│   │   │   │   │   │   ├── Param-list
+│   │   │   │   ├── )
+│   │   │   │   ├── Compound-stmt
+│   ├── Declaration-list
+├── $
