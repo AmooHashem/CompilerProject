@@ -102,7 +102,10 @@ for non_terminal in non_terminals_set:
 #error
 errors = open('syntax_errors.txt', 'a')
 errors.truncate(0)
+errors.write(f'There is no syntax error.')
+
 def handle_error(text):
+    errors.truncate(0)
     errors.write(f'#{get_line_number()} : syntax error, {text}\n')
 #tree
 class Tree_node():

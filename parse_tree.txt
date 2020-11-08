@@ -11,10 +11,57 @@ Program
 │   │   │   │   ├── Params
 │   │   │   │   │   ├── void
 │   │   │   │   │   ├── Param-list-void-abtar
-│   │   │   │   │   │   ├── ID
-│   │   │   │   │   │   ├── Param-prime
-│   │   │   │   │   │   ├── Param-list
 │   │   │   │   ├── )
 │   │   │   │   ├── Compound-stmt
+│   │   │   │   │   ├── {
+│   │   │   │   │   ├── Declaration-list
+│   │   │   │   │   │   ├── Declaration
+│   │   │   │   │   │   │   ├── Declaration-initial
+│   │   │   │   │   │   │   │   ├── Type-specifier
+│   │   │   │   │   │   │   │   │   ├── int
+│   │   │   │   │   │   │   │   ├── ID
+│   │   │   │   │   │   │   ├── Declaration-prime
+│   │   │   │   │   │   │   │   ├── Var-declaration-prime
+│   │   │   │   │   │   │   │   │   ├── ;
+│   │   │   │   │   │   ├── Declaration-list
+│   │   │   │   │   │   │   ├── Declaration
+│   │   │   │   │   │   │   │   ├── Declaration-initial
+│   │   │   │   │   │   │   │   │   ├── Type-specifier
+│   │   │   │   │   │   │   │   │   │   ├── int
+│   │   │   │   │   │   │   │   │   ├── ID
+│   │   │   │   │   │   │   │   ├── Declaration-prime
+│   │   │   │   │   │   │   │   │   ├── Var-declaration-prime
+│   │   │   │   │   │   │   │   │   │   ├── ;
+│   │   │   │   │   │   │   ├── Declaration-list
+│   │   │   │   │   ├── Statement-list
+│   │   │   │   │   │   ├── Statement
+│   │   │   │   │   │   │   ├── Expression-stmt
+│   │   │   │   │   │   │   │   ├── Expression
+│   │   │   │   │   │   │   │   │   ├── ID
+│   │   │   │   │   │   │   │   │   ├── B
+│   │   │   │   │   │   │   │   │   │   ├── =
+│   │   │   │   │   │   │   │   │   │   ├── Expression
+│   │   │   │   │   │   │   │   │   │   │   ├── ID
+│   │   │   │   │   │   │   │   │   │   │   ├── B
+│   │   │   │   │   │   │   │   │   │   │   │   ├── Simple-expression-prime
+│   │   │   │   │   │   │   │   │   │   │   │   │   ├── Additive-expression-prime
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Term-prime
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Signed-factor-prime
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Factor-prime
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── G
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── D
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Addop
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── +
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Term
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Signed-factor
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── -
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── Factor
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── NUM
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── G
+│   │   │   │   │   │   │   │   │   │   │   │   │   │   │   ├── D
+│   │   │   │   │   │   │   │   │   │   │   │   │   ├── C
+│   │   │   │   │   │   │   │   ├── ;
+│   │   │   │   │   │   ├── Statement-list
+│   │   │   │   │   ├── }
 │   ├── Declaration-list
 ├── $
