@@ -135,6 +135,8 @@ class Tree_node():
     def show(self):
         if self.is_terminal:
             return "(" + self.token[0] + ", " + self.token[1] + ")"
+        if self.value == 'ε':
+            return 'epsilon'
         return self.value
 
 #ll1
@@ -143,9 +145,10 @@ all_nodes = [head_node]
 stack = [head_node] 
 
 current_tocken = get_next_token()
-for index in range(0, len(sentences)):
-    if sentences[index][1] == 'ε':
-        sentences[index].pop()
+
+# for index in range(0, len(sentences)):
+#     if sentences[index][1] == 'ε':
+#         sentences[index].pop()
 
 while True:
     X_node = stack[len(stack)-1]
@@ -161,7 +164,9 @@ while True:
     elif current_tocken == '$':
         a = current_tocken
 
-    if X == a and a == '$':
+    if X == 'ε':
+        stack.pop()
+    elif X == a and a == '$':
         break
     elif X == a and X in terminal_set:
         stack.pop()
@@ -182,6 +187,9 @@ while True:
     else:
         sentence = sentences[ll1_table[X][a]]
         node = stack.pop()
+        #print(node , sentence)
+        if len(sentence) == 1: ##
+            all_nodes.remove(node)
         for index in range(len(sentence)-1, 0, -1):
             new_node = Tree_node(sentence[index])
             all_nodes.append(new_node)
@@ -209,10 +217,9 @@ all_nodes.sort(key=operator.attrgetter('depth'))
 
 parse_tree = open('parse_tree.txt', 'a')
 parse_tree.truncate(0)
-
 def draw_tree():
     for node in all_nodes:
-        print(node)
+        #print(node)
         for counter in range(0, node.width - 1):
             parse_tree.write(f'│   ')
         if node.width != 0:
