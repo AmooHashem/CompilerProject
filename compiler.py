@@ -129,7 +129,7 @@ def ll1():
     global all_nodes, head_node
     stack = [head_node]
     current_token = get_next_token()
-
+    is_EOF_error = False
     while True:
         X_node = stack[len(stack) - 1]
         X = X_node.value
@@ -163,7 +163,8 @@ def ll1():
                 pass
         elif a not in ll1_table[X]:
             if a == '$':
-                handle_error('Unexpected EOF')
+                handle_error('unexpected EOF')
+                is_EOF_error = True
                 break
             handle_error('illegal ' + a)
             current_token = get_next_token()
@@ -183,6 +184,16 @@ def ll1():
                 all_nodes.append(new_node)
                 stack.append(new_node)
                 node.add_child(new_node)
+    
+    for node in stack:
+        if node.value == '$' and not is_EOF_error:
+            continue
+        all_nodes.remove(node)
+        try:
+                node.parent.childs.remove(node)
+        except:
+            pass
+
 
 
 def calculate_depth():
@@ -217,12 +228,6 @@ def draw_tree():
             else:
                 parse_tree.write('    ')
         if node.width != 0:
-            if node.value == 'Expression' and node.parent.value == 'Return-stmt-prime':
-                print(len(node.parent.childs))
-                print("################")
-                print("################")
-                print("################")
-
             if node == node.parent.childs[0]:
                 parse_tree.write('└── ')
                 # remove all horizontal line under here:
