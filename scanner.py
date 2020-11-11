@@ -30,9 +30,11 @@ def star_char():
     global iterator
     iterator -= 1
 
+
 def get_line_number():
     global lineno
     return lineno
+
 
 def handle_whitespace(white_space):
     global lineno
@@ -114,7 +116,7 @@ def handle_comment(char):
             if len(comment) >= 2 and comment[len(comment) - 2:] == '*/':
                 return
             char = get_char()
-        return 'error', 'Unclosed comment', '/*' + comment[0:min(5, len(comment) -1)] + '...'
+        return 'error', 'Unclosed comment', '/*' + comment[0:min(5, len(comment) - 1)] + '...'
 
     star_char()
     return 'error', 'Invalid input', '/'

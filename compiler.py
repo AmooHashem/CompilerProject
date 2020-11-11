@@ -2,8 +2,8 @@ from scanner import *
 import re
 import operator
 
-errors = open('syntax_errors.txt', 'a')
-parse_tree = open('parse_tree.txt', 'a')
+errors = open('syntax_errors.txt', 'w')
+parse_tree = open('parse_tree.txt', 'w')
 non_terminals_set = set()
 terminals_set = set()
 ll1_table = {}
@@ -24,36 +24,12 @@ def split_grammar_rules():
 
 def find_T_and_NTs():
     global non_terminals_set, terminals_set
-    for sentence in grammar_production_rules:
-        non_terminals_set.add(sentence[0])
-    for sentence in grammar_production_rules:
-        for T_or_NT in sentence:
+    for rule in grammar_production_rules:
+        non_terminals_set.add(rule[0])
+    for rule in grammar_production_rules:
+        for T_or_NT in rule:
             if T_or_NT not in non_terminals_set:
                 terminals_set.add(T_or_NT)
-
-
-def find_epsilon():
-    is_non_terminal_goto_epsilon = {'ε': True}
-    for non_terminal in non_terminals_set:
-        is_non_terminal_goto_epsilon[non_terminal] = False
-
-    while (True):
-        new_epsilon = False
-        for rule in grammar_production_rules:
-            non_terminal = rule[0]
-            if is_non_terminal_goto_epsilon[non_terminal]:
-                continue
-            is_goto_epsilon = True
-            for T_or_NT in rule[1:]:
-                if T_or_NT not in is_non_terminal_goto_epsilon or \
-                        not is_non_terminal_goto_epsilon[T_or_NT]:
-                    is_goto_epsilon = False
-                    break
-            if is_goto_epsilon:
-                is_non_terminal_goto_epsilon[non_terminal] = True
-                new_epsilon = True
-        if not new_epsilon:
-            return is_non_terminal_goto_epsilon
 
 
 def convert_file_to_dict(file):
@@ -80,7 +56,6 @@ def set_first_and_follows():
 
 def create_table():
     global ll1_table
-    is_non_terminal_goto_epsilon = find_epsilon()
 
     for non_terminal in non_terminals_set:
         ll1_table[non_terminal] = {}
@@ -90,28 +65,19 @@ def create_table():
     for rule in grammar_production_rules:
         rule_number += 1
         non_terminal = rule[0]
-        for product in rule[1:]:
-            for terminal in firsts[product]:
-                if terminal != 'ε':
-                    ll1_table[non_terminal][terminal] = rule_number
-            if product not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[product]:
-                break
+        for terminal in firsts[rule[1]]:
+            if terminal != 'ε':
+                ll1_table[non_terminal][terminal] = rule_number
 
     # handle follows
     rule_number = -1
     for rule in grammar_production_rules:
         rule_number += 1
         non_terminal = rule[0]
-        is_goto_epsilon = True
-        for product in rule:
-            if product not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[product]:
-                is_goto_epsilon = False
-                break
-        if not is_goto_epsilon:
+        if not 'ε' in firsts[non_terminal]:
             continue
         for terminal in follows[non_terminal]:
-            if terminal not in ll1_table[non_terminal]:
-                ll1_table[non_terminal][terminal] = rule_number
+            ll1_table[non_terminal][terminal] = rule_number
 
     # handle synch
     for non_terminal in non_terminals_set:
@@ -121,9 +87,9 @@ def create_table():
 
 
 def handle_error(text):
-    global no_error
+    global no_error, errors
     if no_error:
-        errors.truncate(0)
+        errors.truncate()
         no_error = False
     errors.write(f'#{get_line_number()} : syntax error, {text}\n')
 
@@ -164,21 +130,28 @@ class Tree_node():
 def ll1():
     global all_nodes, head_node
     stack = [head_node]
-    current_tocken = get_next_token()
+    current_token = get_next_token()
 
     while True:
         X_node = stack[len(stack) - 1]
         X = X_node.value
-        if current_tocken[0] == 'SYMBOL':
-            a = current_tocken[1]
-        elif current_tocken[0] == 'ID':
-            a = current_tocken[0]
-        elif current_tocken[0] == 'KEYWORD':
-            a = current_tocken[1]
-        elif current_tocken[0] == 'NUM':
-            a = current_tocken[0]
-        elif current_tocken == '$':
-            a = current_tocken
+
+        if current_token[0] == 'SYMBOL':
+            a = current_token[1]
+        elif current_token[0] == 'ID':
+            a = current_token[0]
+        elif current_token[0] == 'KEYWORD':
+            a = current_token[1]
+        elif current_token[0] == 'NUM':
+            a = current_token[0]
+        elif current_token == '$':
+            a = current_token
+
+        print()
+        print(X)
+        print(current_token)
+        print(get_line_number())
+        print(a)
 
         if X == 'ε':
             stack.pop()
@@ -186,8 +159,8 @@ def ll1():
             break
         elif X == a and X in terminals_set:
             stack.pop()
-            X_node.set_token(current_tocken)
-            current_tocken = get_next_token()
+            X_node.set_token(current_token)
+            current_token = get_next_token()
         elif X != a and X in terminals_set:
             handle_error('missing ' + X)
             node = stack.pop()
@@ -197,7 +170,7 @@ def ll1():
                 handle_error('unexpected EOF')
                 break
             handle_error('illegal ' + a)
-            current_tocken = get_next_token()
+            current_token = get_next_token()
         elif ll1_table[X][a] == 'synch':
             handle_error('missing ' + X)
             node = stack.pop()
@@ -208,16 +181,10 @@ def ll1():
                 pass
 
         else:
-            sentence = grammar_production_rules[ll1_table[X][a]]
+            rule = grammar_production_rules[ll1_table[X][a]]
             node = stack.pop()
-            if len(sentence) == 1:  ##
-                all_nodes.remove(node)
-                try:
-                    node.parent.childs.remove(node)
-                except:
-                    pass
-            for index in range(len(sentence) - 1, 0, -1):
-                new_node = Tree_node(sentence[index], parent=node)
+            for index in range(len(rule) - 1, 0, -1):
+                new_node = Tree_node(rule[index], parent=node)
                 all_nodes.append(new_node)
                 stack.append(new_node)
                 node.add_child(new_node)
