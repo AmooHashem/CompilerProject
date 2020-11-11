@@ -10,8 +10,38 @@ ll1_table = {}
 grammar_production_rules = []
 no_error = True
 
-errors.truncate()
-parse_tree.truncate()
+
+class TreeNode:
+    def __init__(self, value, width=0, parent=None):
+        self.parent = parent
+        self.value = value
+        self.childs = []
+        self.width = width
+        self.depth = 0
+        self.height = 0
+        self.is_terminal = False
+        self.token = None
+
+    def add_child(self, child):
+        self.childs.append(child)
+        child.width = self.width + 1
+
+    def is_leave(self):
+        return len(self.childs) == 0
+
+    def __str__(self):
+        return str(self.value) + " " + str(self.width) + " " + str(self.depth)
+
+    def set_token(self, token):
+        self.token = token
+        self.is_terminal = True
+
+    def show(self):
+        if self.is_terminal:
+            return "(" + self.token[0] + ", " + self.token[1] + ") "
+        if self.value == 'ε':
+            return 'epsilon'
+        return self.value
 
 
 def split_grammar_rules():
@@ -65,9 +95,12 @@ def create_table():
     for rule in grammar_production_rules:
         rule_number += 1
         non_terminal = rule[0]
-        for terminal in firsts[rule[1]]:
-            if terminal != 'ε':
-                ll1_table[non_terminal][terminal] = rule_number
+        for product in rule[1:]:
+            for terminal in firsts[product]:
+                if terminal != 'ε':
+                    ll1_table[non_terminal][terminal] = rule_number
+            if not 'ε' in firsts[product]:
+                break
 
     # handle follows
     rule_number = -1
@@ -88,43 +121,8 @@ def create_table():
 
 def handle_error(text):
     global no_error, errors
-    if no_error:
-        errors.truncate()
-        no_error = False
+    no_error = False
     errors.write(f'#{get_line_number()} : syntax error, {text}\n')
-
-
-class Tree_node():
-    def __init__(self, value, width=0, parent=None):
-        self.parent = parent
-        self.value = value
-        self.childs = []
-        self.width = width
-        self.depth = 0
-        self.height = 0
-        self.is_terminal = False
-        self.token = None
-
-    def add_child(self, child):
-        self.childs.append(child)
-        child.width = self.width + 1
-
-    def is_leave(self):
-        return len(self.childs) == 0
-
-    def __str__(self):
-        return str(self.value) + " " + str(self.width) + " " + str(self.depth)
-
-    def set_token(self, token):
-        self.token = token
-        self.is_terminal = True
-
-    def show(self):
-        if self.is_terminal:
-            return "(" + self.token[0] + ", " + self.token[1] + ") "
-        if self.value == 'ε':
-            return 'epsilon'
-        return self.value
 
 
 def ll1():
@@ -147,12 +145,6 @@ def ll1():
         elif current_token == '$':
             a = current_token
 
-        print()
-        print(X)
-        print(current_token)
-        print(get_line_number())
-        print(a)
-
         if X == 'ε':
             stack.pop()
         elif X == a and a == '$':
@@ -165,9 +157,13 @@ def ll1():
             handle_error('missing ' + X)
             node = stack.pop()
             all_nodes.remove(node)
+            try:
+                node.parent.childs.remove(node)
+            except:
+                pass
         elif a not in ll1_table[X]:
             if a == '$':
-                handle_error('unexpected EOF')
+                handle_error('Unexpected EOF')
                 break
             handle_error('illegal ' + a)
             current_token = get_next_token()
@@ -179,12 +175,11 @@ def ll1():
                 node.parent.childs.remove(node)
             except:
                 pass
-
         else:
             rule = grammar_production_rules[ll1_table[X][a]]
             node = stack.pop()
             for index in range(len(rule) - 1, 0, -1):
-                new_node = Tree_node(rule[index], parent=node)
+                new_node = TreeNode(rule[index], parent=node)
                 all_nodes.append(new_node)
                 stack.append(new_node)
                 node.add_child(new_node)
@@ -208,28 +203,52 @@ def calculate_depth():
     visit(head_node)
 
 
+horizontal_lines = [0]
+
+
 def draw_tree():
+    global horizontal_lines
     for node in all_nodes:
+        for child in node.childs:
+            horizontal_lines.append(child.width)
         for counter in range(0, node.width - 1):
-            parse_tree.write(f'│   ')
+            if counter + 1 in horizontal_lines:
+                parse_tree.write('│   ')
+            else:
+                parse_tree.write('    ')
         if node.width != 0:
-            parse_tree.write(f'├── ')
+            if node.value == 'Expression' and node.parent.value == 'Return-stmt-prime':
+                print(len(node.parent.childs))
+                print("################")
+                print("################")
+                print("################")
+
+            if node == node.parent.childs[0]:
+                parse_tree.write('└── ')
+                # remove all horizontal line under here:
+                horizontal_lines = list(filter(lambda a: a != node.width, horizontal_lines))
+            else:
+                parse_tree.write('├── ')
+
         parse_tree.write(f'{node.show()}\n')
 
 
 if __name__ == '__main__':
-    errors.write(f'There is no syntax error.')
 
     split_grammar_rules()
     find_T_and_NTs()
     set_first_and_follows()
     create_table()
 
-    head_node = Tree_node('Program')
+    head_node = TreeNode('Program')
     all_nodes = [head_node]
     ll1()
 
     calculate_depth()
     all_nodes.sort(key=operator.attrgetter('depth'))
 
+    # remove all nodes that have
+
     draw_tree()
+    if no_error:
+        errors.write('There is no syntax error.')
