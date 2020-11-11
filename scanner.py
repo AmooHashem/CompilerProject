@@ -1,5 +1,3 @@
-# Seyyed Alireza Hashemi and Erfan Moeini
-
 input = open('input.txt', 'r').read()
 input_size = len(input)
 iterator = 0
@@ -147,19 +145,3 @@ def get_next_token():
         return token
     else:
         return get_next_token()
-###############################
-
-def handle_next_line(index, lineno, writer):
-    global last_lines
-    if lineno != last_lines[index]:
-        if last_lines[index] != 0:
-            writer.write('\n')
-        last_lines[index] = lineno
-        writer.write(f'{lineno}.\t')
-        return True
-    return False
-
-def handle_space(is_needed, writer):
-    if is_needed:
-        writer.write(f' ')    
-                

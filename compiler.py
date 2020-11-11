@@ -2,51 +2,51 @@ from scanner import *
 import re
 import operator
 
-non_terminals_set = set()
-terminal_set = set()
-ll1_table = {}
-sentences = []
 errors = open('syntax_errors.txt', 'a')
 parse_tree = open('parse_tree.txt', 'a')
-
-errors.truncate(0)
-parse_tree.truncate(0)
-
+non_terminals_set = set()
+terminals_set = set()
+ll1_table = {}
+grammar_production_rules = []
 no_error = True
 
-def split_sentences():
-    global sentences
+errors.truncate()
+parse_tree.truncate()
+
+
+def split_grammar_rules():
+    global grammar_production_rules
     grammar = open('pa2grammar.txt', 'r').read()
-    sentences = re.split('\n', grammar)
-    for i in range(0, len(sentences)):
-        sentences[i] = re.split(' -> | ', sentences[i])
+    grammar_production_rules = re.split('\n', grammar)
+    for i in range(0, len(grammar_production_rules)):
+        grammar_production_rules[i] = re.split(' -> | ', grammar_production_rules[i])
+
 
 def find_T_and_NTs():
-    global non_terminals_set, terminal_set
-    for sentence in sentences:
+    global non_terminals_set, terminals_set
+    for sentence in grammar_production_rules:
         non_terminals_set.add(sentence[0])
-    for sentence in sentences:
+    for sentence in grammar_production_rules:
         for T_or_NT in sentence:
             if T_or_NT not in non_terminals_set:
-                terminal_set.add(T_or_NT)
+                terminals_set.add(T_or_NT)
 
 
 def find_epsilon():
-    is_non_terminal_goto_epsilon = {}
-    is_non_terminal_goto_epsilon['ε'] = True
+    is_non_terminal_goto_epsilon = {'ε': True}
     for non_terminal in non_terminals_set:
         is_non_terminal_goto_epsilon[non_terminal] = False
 
-    while(True):
+    while (True):
         new_epsilon = False
-        for sentence in sentences:
-            non_terminal = sentence[0]
+        for rule in grammar_production_rules:
+            non_terminal = rule[0]
             if is_non_terminal_goto_epsilon[non_terminal]:
                 continue
             is_goto_epsilon = True
-            for T_or_NT in sentence[1:]:
+            for T_or_NT in rule[1:]:
                 if T_or_NT not in is_non_terminal_goto_epsilon or \
-                    not is_non_terminal_goto_epsilon[T_or_NT]:
+                        not is_non_terminal_goto_epsilon[T_or_NT]:
                     is_goto_epsilon = False
                     break
             if is_goto_epsilon:
@@ -55,25 +55,28 @@ def find_epsilon():
         if not new_epsilon:
             return is_non_terminal_goto_epsilon
 
-def file_to_dict(file_directory):
-    all_list = open(file_directory, 'r').read()
-    all_list = re.split('\n', all_list)
-    for i in range(0, len(all_list)):
-        all_list[i] = re.split(' ', all_list[i])
-    all_dict= {}
-    for NT_all in all_list:
-        key = NT_all[0]
-        all_dict[key] = set()
-        for node in NT_all[1:]:
-            all_dict[key].add(node)
-    return all_dict
+
+def convert_file_to_dict(file):
+    all_terms = open(file, 'r').read()
+    all_terms = re.split('\n', all_terms)
+    for i in range(0, len(all_terms)):
+        all_terms[i] = re.split(' ', all_terms[i])
+    output_dict = {}
+    for term in all_terms:
+        key = term[0]
+        output_dict[key] = set()
+        for node in term[1:]:
+            output_dict[key].add(node)
+    return output_dict
+
 
 def set_first_and_follows():
     global firsts, follows
-    firsts = file_to_dict("Firsts.txt")
-    for terminal in terminal_set:
+    firsts = convert_file_to_dict("Firsts.txt")
+    for terminal in terminals_set:
         firsts[terminal] = {terminal}
-    follows = file_to_dict("Follows.txt")
+    follows = convert_file_to_dict("Follows.txt")
+
 
 def create_table():
     global ll1_table
@@ -81,36 +84,36 @@ def create_table():
 
     for non_terminal in non_terminals_set:
         ll1_table[non_terminal] = {}
-    
-    #handle firsts
-    sentence_index = -1
-    for sentence in sentences:
-        sentence_index += 1
-        non_terminal = sentence[0]
-        for alpha in sentence[1:]:
-            for terminal in firsts[alpha]:
+
+    # handle firsts
+    rule_number = -1
+    for rule in grammar_production_rules:
+        rule_number += 1
+        non_terminal = rule[0]
+        for product in rule[1:]:
+            for terminal in firsts[product]:
                 if terminal != 'ε':
-                    ll1_table[non_terminal][terminal] = sentence_index
-            if alpha not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[alpha]:
+                    ll1_table[non_terminal][terminal] = rule_number
+            if product not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[product]:
                 break
-    
-    #handle follows
-    sentence_index = -1
-    for sentence in sentences:
-        sentence_index += 1
-        non_terminal = sentence[0]
+
+    # handle follows
+    rule_number = -1
+    for rule in grammar_production_rules:
+        rule_number += 1
+        non_terminal = rule[0]
         is_goto_epsilon = True
-        for alpha in sentence:
-            if alpha not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[alpha]:
+        for product in rule:
+            if product not in is_non_terminal_goto_epsilon or not is_non_terminal_goto_epsilon[product]:
                 is_goto_epsilon = False
                 break
         if not is_goto_epsilon:
             continue
         for terminal in follows[non_terminal]:
             if terminal not in ll1_table[non_terminal]:
-                ll1_table[non_terminal][terminal] = sentence_index
-    
-    #handle synch
+                ll1_table[non_terminal][terminal] = rule_number
+
+    # handle synch
     for non_terminal in non_terminals_set:
         for terminal in follows[non_terminal]:
             if terminal not in ll1_table[non_terminal]:
@@ -124,6 +127,7 @@ def handle_error(text):
         no_error = False
     errors.write(f'#{get_line_number()} : syntax error, {text}\n')
 
+
 class Tree_node():
     def __init__(self, value, width=0, parent=None):
         self.parent = parent
@@ -134,14 +138,14 @@ class Tree_node():
         self.height = 0
         self.is_terminal = False
         self.token = None
-    
+
     def add_child(self, child):
         self.childs.append(child)
         child.width = self.width + 1
 
     def is_leave(self):
         return len(self.childs) == 0
-    
+
     def __str__(self):
         return str(self.value) + " " + str(self.width) + " " + str(self.depth)
 
@@ -157,14 +161,13 @@ class Tree_node():
         return self.value
 
 
-
 def ll1():
     global all_nodes, head_node
-    stack = [head_node] 
+    stack = [head_node]
     current_tocken = get_next_token()
 
     while True:
-        X_node = stack[len(stack)-1]
+        X_node = stack[len(stack) - 1]
         X = X_node.value
         if current_tocken[0] == 'SYMBOL':
             a = current_tocken[1]
@@ -176,16 +179,16 @@ def ll1():
             a = current_tocken[0]
         elif current_tocken == '$':
             a = current_tocken
-        
+
         if X == 'ε':
             stack.pop()
         elif X == a and a == '$':
             break
-        elif X == a and X in terminal_set:
+        elif X == a and X in terminals_set:
             stack.pop()
             X_node.set_token(current_tocken)
             current_tocken = get_next_token()
-        elif X != a and X in terminal_set:
+        elif X != a and X in terminals_set:
             handle_error('missing ' + X)
             node = stack.pop()
             all_nodes.remove(node)
@@ -203,24 +206,26 @@ def ll1():
                 node.parent.childs.remove(node)
             except:
                 pass
-            
+
         else:
-            sentence = sentences[ll1_table[X][a]]
+            sentence = grammar_production_rules[ll1_table[X][a]]
             node = stack.pop()
-            if len(sentence) == 1: ##
+            if len(sentence) == 1:  ##
                 all_nodes.remove(node)
                 try:
                     node.parent.childs.remove(node)
                 except:
-                    pass           
-            for index in range(len(sentence)-1, 0, -1):
+                    pass
+            for index in range(len(sentence) - 1, 0, -1):
                 new_node = Tree_node(sentence[index], parent=node)
                 all_nodes.append(new_node)
                 stack.append(new_node)
                 node.add_child(new_node)
 
+
 def calculate_depth():
     global head_node
+
     def visit(node):
         if node.is_leave():
             return
@@ -232,7 +237,9 @@ def calculate_depth():
             visit(child)
             depth += child.height + 1
             node.height += child.height + 1
+
     visit(head_node)
+
 
 def draw_tree():
     for node in all_nodes:
@@ -242,10 +249,11 @@ def draw_tree():
             parse_tree.write(f'├── ')
         parse_tree.write(f'{node.show()}\n')
 
+
 if __name__ == '__main__':
     errors.write(f'There is no syntax error.')
 
-    split_sentences()
+    split_grammar_rules()
     find_T_and_NTs()
     set_first_and_follows()
     create_table()
