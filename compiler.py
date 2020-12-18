@@ -235,7 +235,7 @@ def draw_tree():
         parse_tree.write(f'{node.show()}\n')
 
 
-if __name__ == '__main__':
+if __name__ ==  '__main__':
 
     split_grammar_rules()
     find_terminals_and_non_terminals()
