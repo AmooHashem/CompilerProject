@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*sample 3*/
 void main (void) {
 int a;
@@ -20,3 +21,12 @@ int b;
 	}
 	return;
 }
+=======
+/*sample 6*/
+void main(void{
+	int prod;
+	int i;
+		prod = 1;
+		i = +1;
+}
+>>>>>>> 47e78b7d7ed5b49a175b676cb08cd224f47746bb

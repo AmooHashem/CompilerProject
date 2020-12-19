@@ -1,4 +1,5 @@
 Program
+<<<<<<< HEAD
 ├── Declaration-list
 │   ├── Declaration
 │   │   ├── Declaration-initial
@@ -307,3 +308,18 @@ Program
 │   └── Declaration-list
 │       └── epsilon
 └── $
+=======
+└── Declaration-list
+    └── Declaration
+        ├── Declaration-initial
+        │   ├── Type-specifier
+        │   │   └── (KEYWORD, void) 
+        │   └── (ID, main) 
+        └── Declaration-prime
+            └── Fun-declaration-prime
+                ├── (SYMBOL, () 
+                └── Params
+                    ├── (KEYWORD, void) 
+                    └── Param-list-void-abtar
+                        └── (ID, prod) 
+>>>>>>> 47e78b7d7ed5b49a175b676cb08cd224f47746bb

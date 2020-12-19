@@ -15,7 +15,7 @@ class TreeNode:
     def __init__(self, value, width=0, parent=None):
         self.parent = parent
         self.value = value
-        self.childs = []
+        self.children = []
         self.width = width
         self.depth = 0
         self.height = 0
@@ -23,11 +23,11 @@ class TreeNode:
         self.token = None
 
     def add_child(self, child):
-        self.childs.append(child)
+        self.children.append(child)
         child.width = self.width + 1
 
     def is_leave(self):
-        return len(self.childs) == 0
+        return len(self.children) == 0
 
     def __str__(self):
         return str(self.value) + " " + str(self.width) + " " + str(self.depth)
@@ -52,7 +52,7 @@ def split_grammar_rules():
         grammar_production_rules[i] = re.split(' -> | ', grammar_production_rules[i])
 
 
-def find_T_and_NTs():
+def find_terminals_and_non_terminals():
     global non_terminals_set, terminals_set
     for rule in grammar_production_rules:
         non_terminals_set.add(rule[0])
@@ -158,7 +158,7 @@ def ll1():
             node = stack.pop()
             all_nodes.remove(node)
             try:
-                node.parent.childs.remove(node)
+                node.parent.children.remove(node)
             except:
                 pass
         elif a not in ll1_table[X]:
@@ -173,7 +173,7 @@ def ll1():
             node = stack.pop()
             all_nodes.remove(node)
             try:
-                node.parent.childs.remove(node)
+                node.parent.children.remove(node)
             except:
                 pass
         else:
@@ -184,16 +184,15 @@ def ll1():
                 all_nodes.append(new_node)
                 stack.append(new_node)
                 node.add_child(new_node)
-    
+
     for node in stack:
         if node.value == '$' and not is_EOF_error:
             continue
         all_nodes.remove(node)
         try:
-                node.parent.childs.remove(node)
+            node.parent.children.remove(node)
         except:
             pass
-
 
 
 def calculate_depth():
@@ -204,8 +203,8 @@ def calculate_depth():
             return
         depth = node.depth + 1
         node.height = 0
-        for index in range(len(node.childs) - 1, -1, -1):
-            child = node.childs[index]
+        for index in range(len(node.children) - 1, -1, -1):
+            child = node.children[index]
             child.depth = depth
             visit(child)
             depth += child.height + 1
@@ -220,7 +219,7 @@ horizontal_lines = [0]
 def draw_tree():
     global horizontal_lines
     for node in all_nodes:
-        for child in node.childs:
+        for child in node.children:
             horizontal_lines.append(child.width)
         for counter in range(0, node.width - 1):
             if counter + 1 in horizontal_lines:
@@ -228,20 +227,18 @@ def draw_tree():
             else:
                 parse_tree.write('    ')
         if node.width != 0:
-            if node == node.parent.childs[0]:
+            if node == node.parent.children[0]:
                 parse_tree.write('└── ')
-                # remove all horizontal line under here:
-                horizontal_lines = list(filter(lambda a: a != node.width, horizontal_lines))
             else:
                 parse_tree.write('├── ')
-
+        horizontal_lines.remove(node.width)
         parse_tree.write(f'{node.show()}\n')
 
 
 if __name__ == '__main__':
 
     split_grammar_rules()
-    find_T_and_NTs()
+    find_terminals_and_non_terminals()
     set_first_and_follows()
     create_table()
 
@@ -251,8 +248,6 @@ if __name__ == '__main__':
 
     calculate_depth()
     all_nodes.sort(key=operator.attrgetter('depth'))
-
-    # remove all nodes that have
 
     draw_tree()
     if no_error:
