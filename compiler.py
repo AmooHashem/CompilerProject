@@ -1,196 +1,254 @@
-# Seyyed Alireza Hashemi and Erfan Moeini
+from scanner import *
+import re
+import operator
 
-input = open('input.txt', 'r').read()
-errors = open('lexical_errors.txt', 'a')
-tokens = open('tokens.txt', 'a')
-symbols = open('symbol_table.txt', 'a')
-input_size = len(input)
-iterator = 0
-last_lines = [0, 0, 0]
-lineno = 1
-all_IDS_or_KEYWORDS = []
-WHITESPACES = [' ', '\n', '\r', '\t', '\v', '\f']
-SYMBOL = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<']
-KEYWORD = ['if', 'else', 'void', 'int', 'while', 'break', 'switch', 'default', 'case', 'return', ]
-ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
-            'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-COMMENT = ['/']
-DIGIT = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
-VALID_CHARACTERS = WHITESPACES + SYMBOL + ALPHABET + DIGIT + COMMENT
+errors = open('syntax_errors.txt', 'w')
+parse_tree = open('parse_tree.txt', 'w')
+non_terminals_set = set()
+terminals_set = set()
+ll1_table = {}
+grammar_production_rules = []
+no_error = True
 
 
-###############################
+class TreeNode:
+    def __init__(self, value, width=0, parent=None):
+        self.parent = parent
+        self.value = value
+        self.children = []
+        self.width = width
+        self.depth = 0
+        self.height = 0
+        self.is_terminal = False
+        self.token = None
+
+    def add_child(self, child):
+        self.children.append(child)
+        child.width = self.width + 1
+
+    def is_leave(self):
+        return len(self.children) == 0
+
+    def __str__(self):
+        return str(self.value) + " " + str(self.width) + " " + str(self.depth)
+
+    def set_token(self, token):
+        self.token = token
+        self.is_terminal = True
+
+    def show(self):
+        if self.is_terminal:
+            return "(" + self.token[0] + ", " + self.token[1] + ") "
+        if self.value == 'ε':
+            return 'epsilon'
+        return self.value
 
 
-def get_char():
-    global iterator, input_size, input
-    if iterator == input_size:
-        return 'EOF'
-    iterator += 1
-    return input[iterator - 1]
+def split_grammar_rules():
+    global grammar_production_rules
+    grammar = open('pa2grammar.txt', 'r').read()
+    grammar_production_rules = re.split('\n', grammar)
+    for i in range(0, len(grammar_production_rules)):
+        grammar_production_rules[i] = re.split(' -> | ', grammar_production_rules[i])
 
 
-def star_char():
-    global iterator
-    iterator -= 1
+def find_terminals_and_non_terminals():
+    global non_terminals_set, terminals_set
+    for rule in grammar_production_rules:
+        non_terminals_set.add(rule[0])
+    for rule in grammar_production_rules:
+        for T_or_NT in rule:
+            if T_or_NT not in non_terminals_set:
+                terminals_set.add(T_or_NT)
 
 
-def handle_whitespace(white_space):
-    global lineno
-    if white_space == '\n':
-        lineno += 1
+def convert_file_to_dict(file):
+    all_terms = open(file, 'r').read()
+    all_terms = re.split('\n', all_terms)
+    for i in range(0, len(all_terms)):
+        all_terms[i] = re.split(' ', all_terms[i])
+    output_dict = {}
+    for term in all_terms:
+        key = term[0]
+        output_dict[key] = set()
+        for node in term[1:]:
+            output_dict[key].add(node)
+    return output_dict
 
 
-def handle_keyword_and_id(char):
-    global ALPHABET, DIGIT, KEYWORD, VALID_CHARACTERS
-    keyword_or_id = ''
-    while char in ALPHABET or char in DIGIT:
-        keyword_or_id += char
-        char = get_char()
-
-    if not char in VALID_CHARACTERS:
-        keyword_or_id += char
-        return 'error', 'Invalid input', keyword_or_id,
-
-    star_char()
-    if keyword_or_id in KEYWORD:
-        return 'KEYWORD', keyword_or_id
-    else:
-        return 'ID', keyword_or_id
+def set_first_and_follows():
+    global firsts, follows
+    firsts = convert_file_to_dict("Firsts.txt")
+    for terminal in terminals_set:
+        firsts[terminal] = {terminal}
+    follows = convert_file_to_dict("Follows.txt")
 
 
-def handle_symbol(char):
-    global SYMBOL, VALID_CHARACTERS
-    if char != '=' and char != '*':
-        return 'SYMBOL', char
+def create_table():
+    global ll1_table
 
-    if char == '=':
-        char = get_char()
-        if char == '=':
-            return 'SYMBOL', '=='
-        if not char in VALID_CHARACTERS:
-            return 'error', 'Invalid input', '=' + char
-        star_char()
-        return 'SYMBOL', '='
+    for non_terminal in non_terminals_set:
+        ll1_table[non_terminal] = {}
 
-    if char == '*':
-        char = get_char()
-        if not char in VALID_CHARACTERS:
-            return 'error', 'Invalid input', '*' + char
-        if char == '/':
-            return 'error', 'Unmatched comment', '*' + char
-        star_char()
-        return 'SYMBOL', '*'
+    # handle firsts
+    rule_number = -1
+    for rule in grammar_production_rules:
+        rule_number += 1
+        non_terminal = rule[0]
+        for product in rule[1:]:
+            for terminal in firsts[product]:
+                if terminal != 'ε':
+                    ll1_table[non_terminal][terminal] = rule_number
+            if not 'ε' in firsts[product]:
+                break
 
+    # handle follows
+    rule_number = -1
+    for rule in grammar_production_rules:
+        rule_number += 1
+        non_terminal = rule[0]
+        if not 'ε' in firsts[non_terminal]:
+            continue
+        for terminal in follows[non_terminal]:
+            ll1_table[non_terminal][terminal] = rule_number
 
-def handle_digit(char):
-    global DIGIT, ALPHABET, VALID_CHARACTERS
-    number = ''
-    while char in DIGIT:
-        number += char
-        char = get_char()
-    if char in ALPHABET:
-        number += char
-        return 'error', 'Invalid number', number
-    if not char in VALID_CHARACTERS:
-        number += char
-        return 'error', 'Invalid input', number
-    star_char()
-    return 'NUM', number
+    # handle synch
+    for non_terminal in non_terminals_set:
+        for terminal in follows[non_terminal]:
+            if terminal not in ll1_table[non_terminal]:
+                ll1_table[non_terminal][terminal] = 'synch'
 
 
-def handle_comment(char):
-    char = get_char()
-    if char == '/':
-        char = get_char()
-        while char != '\n':
-            char = get_char()
-        star_char()
-        return
-    if char == '*':
-        char = get_char()
-        comment = ''
-        while char != 'EOF':
-            comment += char
-            if len(comment) >= 2 and comment[len(comment) - 2:] == '*/':
-                return
-            char = get_char()
-        return 'error', 'Unclosed comment', '/*' + comment[0:min(5, len(comment) -1)] + '...'
-
-    star_char()
-    return 'error', 'Invalid input', '/'
+def handle_error(text):
+    global no_error, errors
+    no_error = False
+    errors.write(f'#{get_line_number()} : syntax error, {text}\n')
 
 
-def handle_invalid_input(char):
-    return 'error', 'Invalid input', char
+def ll1():
+    global all_nodes, head_node
+    stack = [head_node]
+    current_token = get_next_token()
+    is_EOF_error = False
+    while True:
+        X_node = stack[len(stack) - 1]
+        X = X_node.value
+
+        if current_token[0] == 'SYMBOL':
+            a = current_token[1]
+        elif current_token[0] == 'ID':
+            a = current_token[0]
+        elif current_token[0] == 'KEYWORD':
+            a = current_token[1]
+        elif current_token[0] == 'NUM':
+            a = current_token[0]
+        elif current_token == '$':
+            a = current_token
+
+        if X == 'ε':
+            stack.pop()
+        elif X == a and a == '$':
+            break
+        elif X == a and X in terminals_set:
+            stack.pop()
+            X_node.set_token(current_token)
+            current_token = get_next_token()
+        elif X != a and X in terminals_set:
+            handle_error('missing ' + X)
+            node = stack.pop()
+            all_nodes.remove(node)
+            try:
+                node.parent.children.remove(node)
+            except:
+                pass
+        elif a not in ll1_table[X]:
+            if a == '$':
+                handle_error('unexpected EOF')
+                is_EOF_error = True
+                break
+            handle_error('illegal ' + a)
+            current_token = get_next_token()
+        elif ll1_table[X][a] == 'synch':
+            handle_error('missing ' + X)
+            node = stack.pop()
+            all_nodes.remove(node)
+            try:
+                node.parent.children.remove(node)
+            except:
+                pass
+        else:
+            rule = grammar_production_rules[ll1_table[X][a]]
+            node = stack.pop()
+            for index in range(len(rule) - 1, 0, -1):
+                new_node = TreeNode(rule[index], parent=node)
+                all_nodes.append(new_node)
+                stack.append(new_node)
+                node.add_child(new_node)
+
+    for node in stack:
+        if node.value == '$' and not is_EOF_error:
+            continue
+        all_nodes.remove(node)
+        try:
+            node.parent.children.remove(node)
+        except:
+            pass
 
 
-def get_next_token(char):
-    token = ''
-    if char in WHITESPACES:
-        handle_whitespace(char)
-    elif char in ALPHABET:
-        token = handle_keyword_and_id(char)
-    elif char in SYMBOL:
-        token = handle_symbol(char)
-    elif char in DIGIT:
-        token = handle_digit(char)
-    elif char in COMMENT:
-        token = handle_comment(char)
-    else:
-        token = handle_invalid_input(char)
+def calculate_depth():
+    global head_node
 
-    return token
+    def visit(node):
+        if node.is_leave():
+            return
+        depth = node.depth + 1
+        node.height = 0
+        for index in range(len(node.children) - 1, -1, -1):
+            child = node.children[index]
+            child.depth = depth
+            visit(child)
+            depth += child.height + 1
+            node.height += child.height + 1
 
-###############################
+    visit(head_node)
 
-def handle_next_line(index, lineno, writer):
-    global last_lines
-    if lineno != last_lines[index]:
-        if last_lines[index] != 0:
-            writer.write('\n')
-        last_lines[index] = lineno
-        writer.write(f'{lineno}.\t')
-        return True
-    return False
 
-def handle_space(is_needed, writer):
-    if is_needed:
-        writer.write(f' ')    
-                
+horizontal_lines = [0]
 
-errors.truncate(0)
-tokens.truncate(0)
-symbols.truncate(0)
+
+def draw_tree():
+    global horizontal_lines
+    for node in all_nodes:
+        for child in node.children:
+            horizontal_lines.append(child.width)
+        for counter in range(0, node.width - 1):
+            if counter + 1 in horizontal_lines:
+                parse_tree.write('│   ')
+            else:
+                parse_tree.write('    ')
+        if node.width != 0:
+            if node == node.parent.children[0]:
+                parse_tree.write('└── ')
+            else:
+                parse_tree.write('├── ')
+        horizontal_lines.remove(node.width)
+        parse_tree.write(f'{node.show()}\n')
+
 
 if __name__ == '__main__':
-    there_is_lexical_errors = False
-    char = get_char()
-    while char != 'EOF':
-        token = get_next_token(char)
-        if token:
-            if token[0] == 'error':
-                is_new_line = handle_next_line(0, lineno, errors)
-                handle_space(not is_new_line, errors)
-                errors.write(f'({token[2]}, {token[1]})')
-                there_is_lexical_errors = True
-            if token[0] != 'error':
-                is_new_line = handle_next_line(1, lineno, tokens)
-                handle_space(not is_new_line, tokens)
-                tokens.write(f'({token[0]}, {token[1]})')
-            if token[0] == 'ID' or token[0] == 'KEYWORD':
-                if not token[1] in all_IDS_or_KEYWORDS:
-                    all_IDS_or_KEYWORDS.append(token[1])
-                    handle_next_line(2, len(all_IDS_or_KEYWORDS), symbols)
-                    symbols.write(f'{token[1]}')
-        char = get_char()
 
-    if not there_is_lexical_errors:
-        errors.write(f'There is no lexical error.')
+    split_grammar_rules()
+    find_terminals_and_non_terminals()
+    set_first_and_follows()
+    create_table()
 
-    for keyword in KEYWORD:
-        if not keyword in all_IDS_or_KEYWORDS:
-            all_IDS_or_KEYWORDS.append(keyword)
-            handle_next_line(2, len(all_IDS_or_KEYWORDS), symbols)
-            symbols.write(f'{keyword}')
+    head_node = TreeNode('Program')
+    all_nodes = [head_node]
+    ll1()
+
+    calculate_depth()
+    all_nodes.sort(key=operator.attrgetter('depth'))
+
+    draw_tree()
+    if no_error:
+        errors.write('There is no syntax error.')
