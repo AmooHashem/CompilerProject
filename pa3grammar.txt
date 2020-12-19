@@ -1,8 +1,8 @@
-Program -> Declaration-list $
+Program -> #startscope Declaration-list #endscope $
 Declaration-list -> Declaration Declaration-list
 Declaration-list -> ε
 Declaration -> Declaration-initial Declaration-prime
-Declaration-initial -> #savetype Type-specifier #saveid ID
+Declaration-initial -> Type-specifier #saveinp ID
 Declaration-prime -> Fun-declaration-prime
 Declaration-prime -> Var-declaration-prime
 Var-declaration-prime -> ; #setvar
@@ -19,7 +19,7 @@ Param-list -> ε
 Param -> Declaration-initial Param-prime
 Param-prime -> [ ]
 Param-prime -> ε
-Compound-stmt -> { Declaration-list Statement-list }
+Compound-stmt -> { #startscope Declaration-list Statement-list #endscope }
 Statement-list -> Statement Statement-list
 Statement-list -> ε
 Statement -> Expression-stmt
@@ -51,14 +51,14 @@ H -> = Expression #assign
 H -> G D C
 Simple-expression-zegond -> Additive-expression-zegond C
 Simple-expression-prime -> Additive-expression-prime C
-C -> #saverelop Relop Additive-expression #relop
+C -> #saveinp Relop Additive-expression #opperation
 C -> ε
 Relop -> <
 Relop -> ==
 Additive-expression -> Term D
 Additive-expression-prime -> Term-prime D
 Additive-expression-zegond -> Term-zegond D
-D -> #savesigne Addop Term #addorsub D
+D -> #saveinp Addop Term #opperation D
 D -> ε
 Addop -> +
 Addop -> -
@@ -81,7 +81,7 @@ Var-call-prime -> ( Args #output_in )
 Var-call-prime -> Var-prime
 Var-prime -> [ Expression ] #index
 Var-prime -> ε
-Factor-prime -> ( Args )
+Factor-prime -> ( Args #output_in )
 Factor-prime -> ε
 Factor-zegond -> ( Expression )
 Factor-zegond -> #pnum NUM

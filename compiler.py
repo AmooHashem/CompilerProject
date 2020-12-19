@@ -1,7 +1,7 @@
 from scanner import *
 import re
 import operator
-
+from codegenerator import code_gen, save_code_gen
 errors = open('syntax_errors.txt', 'w')
 parse_tree = open('parse_tree.txt', 'w')
 non_terminals_set = set()
@@ -44,9 +44,9 @@ class TreeNode:
         return self.value
 
 
-def split_grammar_rules():
+def split_grammar_rules(address):
     global grammar_production_rules
-    grammar = open('pa2grammar.txt', 'r').read()
+    grammar = open(address, 'r').read()
     grammar_production_rules = re.split('\n', grammar)
     for i in range(0, len(grammar_production_rules)):
         grammar_production_rules[i] = re.split(' -> | ', grammar_production_rules[i])
@@ -145,7 +145,10 @@ def ll1():
         elif current_token == '$':
             a = current_token
 
-        if X == 'ε':
+        if X[0] == '#':
+            code_gen(X, current_token)
+            stack.pop()      
+        elif X == 'ε':
             stack.pop()
         elif X == a and a == '$':
             break
@@ -237,15 +240,16 @@ def draw_tree():
 
 if __name__ == '__main__':
 
-    split_grammar_rules()
+    split_grammar_rules('pa2grammar.txt')
     find_terminals_and_non_terminals()
     set_first_and_follows()
     create_table()
 
     head_node = TreeNode('Program')
     all_nodes = [head_node]
+    split_grammar_rules('pa3grammar.txt')
     ll1()
-
+    save_code_gen()
     calculate_depth()
     all_nodes.sort(key=operator.attrgetter('depth'))
 
