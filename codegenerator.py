@@ -47,7 +47,7 @@ def findaddr(id):
 
 
 def code_gen(action, current_token):
-    global i, PB, gstack
+    global i, PB, gstack, symbol_table
     print(action, current_token, gstack)
     if action == '#pid':
         p = findaddr(current_token[1])
@@ -81,7 +81,15 @@ def code_gen(action, current_token):
     elif action == '#index':
         index = gstack.pop()
         address = gstack.pop()
-        gstack.append(str(int(address) + 4*int(index[1:]) ))
+        if index[0] == '#':
+            gstack.append(str(int(address) + 4*int(index[1:]) ))
+        else:
+            t = gettemp()
+            add_block(i, 'MULT', '#4', index, t)
+            i += 1
+            add_block(i, 'ADD', '#'+address, t, t)
+            i += 1
+            gstack.append('@' + t)
 
     elif action == '#pop':
         gstack.pop()
