@@ -3,35 +3,35 @@ scope_stack = []
 
 last_temp_address = 100
 
-gstack = []
+SS = []
 PB = []
 i = 0
 
 
-def add_block(indx, op, a1, a2="", r=""):
+def add_instruction_to_program_block(index, op, a1, a2='', r=''):
     global PB
-    while len(PB) <= indx:
-        PB.append("")
-    PB[indx] = "(" + op + ', ' + a1 + ', ' + a2 + ', ' + r + ')'
+    while len(PB) <= index:
+        PB.append('')
+    PB[index] = f'({op}, {a1}, {a2}, {r})'
 
 
-def gettemp(size=1):
+def get_temporary_variables(count=1):
     global last_temp_address, i
     output = str(last_temp_address)
-    for w in range(0, size):
-        add_block(i, 'ASSIGN', '#0', str(last_temp_address))
+    for w in range(0, count):
+        add_instruction_to_program_block(i, 'ASSIGN', '#0', str(last_temp_address))
         i += 1
         last_temp_address += 4
     return output
 
 
-def add_variable(lexeme, typ, attributes):
+def initialize_identifier(id, type, attributes):
     global symbol_table
-    if typ == 'int':
-        attributes = gettemp()
-    elif typ == 'array':
-        attributes = gettemp(int(attributes))
-    symbol_table.append((lexeme, typ, attributes))
+    if type == 'int':
+        attributes = get_temporary_variables()
+    elif type == 'array':
+        attributes = get_temporary_variables(int(attributes))
+    symbol_table.append((id, type, attributes))
 
 
 def end_scope():
@@ -46,121 +46,121 @@ def start_scope():
     scope_stack.append(len(symbol_table))
 
 
-def findaddr(id):
+def find_identifier_address(id):
     global symbol_table
     for row in symbol_table:
         if id == row[0]:
             return row[2]
 
 
-def code_gen(action, current_token):
-    global i, PB, gstack
+def generate_intermediate_code(action_type, current_token):
+    global i, PB, SS
 
-    if action == '#pid':
-        p = findaddr(current_token[1])
-        gstack.append(p)
+    if action_type == '#pid':
+        p = find_identifier_address(current_token[1])
+        SS.append(p)
 
-    elif action == '#pnum':
-        gstack.append('#' + current_token[1])
+    elif action_type == '#pnum':
+        SS.append('#' + current_token[1])
 
-    elif action == '#mult':
-        t = gettemp()
-        top = len(gstack) - 1
-        add_block(i, 'MULT', gstack[top], gstack[top - 1], t)
+    elif action_type == '#mult':
+        t = get_temporary_variables()
+        top = len(SS) - 1
+        add_instruction_to_program_block(i, 'MULT', SS[top], SS[top - 1], t)
         i += 1
-        gstack.pop()
-        gstack.pop()
-        gstack.append(t)
+        SS.pop()
+        SS.pop()
+        SS.append(t)
 
-    elif action == '#setvar':
-        add_variable(gstack.pop(), 'int', "")
+    elif action_type == '#setvar':
+        initialize_identifier(SS.pop(), 'int', "")
 
-    elif action == '#setarr':
-        size = gstack.pop()
-        add_variable(gstack.pop(), 'array', size[1:])
+    elif action_type == '#setarr':
+        size = SS.pop()
+        initialize_identifier(SS.pop(), 'array', size[1:])
 
-    elif action == '#assign':
-        top = len(gstack) - 1
-        add_block(i, 'ASSIGN', gstack[top], gstack[top - 1])
+    elif action_type == '#assign':
+        top = len(SS) - 1
+        add_instruction_to_program_block(i, 'ASSIGN', SS[top], SS[top - 1])
         i += 1
-        gstack.pop()
+        SS.pop()
 
-    elif action == '#index':
-        index = gstack.pop()
-        address = gstack.pop()
+    elif action_type == '#index':
+        index = SS.pop()
+        address = SS.pop()
         if index[0] == '#':
-            gstack.append(str(int(address) + 4 * int(index[1:])))
+            SS.append(str(int(address) + 4 * int(index[1:])))
         else:
-            t = gettemp()
-            add_block(i, 'MULT', '#4', index, t)
+            t = get_temporary_variables()
+            add_instruction_to_program_block(i, 'MULT', '#4', index, t)
             i += 1
-            add_block(i, 'ADD', '#' + address, t, t)
+            add_instruction_to_program_block(i, 'ADD', '#' + address, t, t)
             i += 1
-            gstack.append('@' + t)
+            SS.append('@' + t)
 
-    elif action == '#pop':
-        gstack.pop()
-    elif action == '#saveinp':
-        gstack.append(current_token[1])
+    elif action_type == '#pop':
+        SS.pop()
+    elif action_type == '#saveinp':
+        SS.append(current_token[1])
 
 
-    elif action == '#opperation':
-        second_op = gstack.pop()
-        op = gstack.pop()
-        first_op = gstack.pop()
-        t = gettemp()
+    elif action_type == '#opperation':
+        second_op = SS.pop()
+        op = SS.pop()
+        first_op = SS.pop()
+        t = get_temporary_variables()
         if op == '+':
-            add_block(i, 'ADD', first_op, second_op, t)
+            add_instruction_to_program_block(i, 'ADD', first_op, second_op, t)
         elif op == '-':
-            add_block(i, 'SUB', first_op, second_op, t)
+            add_instruction_to_program_block(i, 'SUB', first_op, second_op, t)
         elif op == '<':
-            add_block(i, 'LT', first_op, second_op, t)
+            add_instruction_to_program_block(i, 'LT', first_op, second_op, t)
         elif op == '==':
-            add_block(i, 'EQ', first_op, second_op, t)
-        gstack.append(t)
+            add_instruction_to_program_block(i, 'EQ', first_op, second_op, t)
+        SS.append(t)
         i += 1
 
-    elif action == '#signed':
-        top_value = gstack.pop()
-        t = gettemp()
-        add_block(i, 'SUB', '#0', top_value, t)
+    elif action_type == '#signed':
+        top_value = SS.pop()
+        t = get_temporary_variables()
+        add_instruction_to_program_block(i, 'SUB', '#0', top_value, t)
         i += 1
-        gstack.append(t)
+        SS.append(t)
 
-    elif action == '#output_in':
-        top_value = gstack.pop()
-        add_block(i, 'PRINT', top_value)
+    elif action_type == '#output_in':
+        top_value = SS.pop()
+        add_instruction_to_program_block(i, 'PRINT', top_value)
         i += 1
-    elif action == '#save':
-        gstack.append(i)
-        i += 1
-
-    elif action == '#jpf_save':
-        indx = gstack.pop()
-        exp = gstack.pop()
-        add_block(indx, 'JPF', exp, str(i + 1))
-        gstack.append(i)
+    elif action_type == '#save':
+        SS.append(i)
         i += 1
 
-    elif action == '#jp':
-        indx = gstack.pop()
-        add_block(indx, 'JP', str(i))
-
-    elif action == '#label':
-        gstack.append(str(i))
-
-    elif action == '#while':
-        indx = gstack.pop()
-        exp = gstack.pop()
-        add_block(indx, 'JPF', exp, str(i + 1))
-        label = gstack.pop()
-        add_block(i, 'JP', label)
+    elif action_type == '#jpf_save':
+        indx = SS.pop()
+        exp = SS.pop()
+        add_instruction_to_program_block(indx, 'JPF', exp, str(i + 1))
+        SS.append(i)
         i += 1
 
-    elif action == '#startscope':
+    elif action_type == '#jp':
+        indx = SS.pop()
+        add_instruction_to_program_block(indx, 'JP', str(i))
+
+    elif action_type == '#label':
+        SS.append(str(i))
+
+    elif action_type == '#while':
+        indx = SS.pop()
+        exp = SS.pop()
+        add_instruction_to_program_block(indx, 'JPF', exp, str(i + 1))
+        label = SS.pop()
+        add_instruction_to_program_block(i, 'JP', label)
+        i += 1
+
+    elif action_type == '#startscope':
         start_scope()
 
-    elif action == '#endscope':
+    elif action_type == '#endscope':
         end_scope()
 
 

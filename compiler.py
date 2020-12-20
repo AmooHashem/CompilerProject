@@ -1,7 +1,7 @@
 from scanner import *
 import re
 import operator
-from codegenerator import code_gen, save_code_gen
+from codegenerator import generate_intermediate_code, save_code_gen
 
 errors = open('syntax_errors.txt', 'w')
 parse_tree = open('parse_tree.txt', 'w')
@@ -147,7 +147,7 @@ def ll1():
             a = current_token
 
         if X[0] == '#':
-            code_gen(X, current_token)
+            generate_intermediate_code(X, current_token)
             stack.pop()
         elif X == 'ε':
             stack.pop()
@@ -217,9 +217,6 @@ def calculate_depth():
     visit(head_node)
 
 
-horizontal_lines = [0]
-
-
 if __name__ == '__main__':
 
     split_grammar_rules('pa2grammar.txt')
@@ -232,3 +229,6 @@ if __name__ == '__main__':
     split_grammar_rules('pa3grammar.txt')
     ll1()
     save_code_gen()
+
+    if no_error:
+        errors.write('There is no syntax error.')
