@@ -28,7 +28,7 @@ Statement -> Selection-stmt
 Statement -> Iteration-stmt
 Statement -> Return-stmt
 Statement -> Switch-stmt
-Expression-stmt -> Expression ;
+Expression-stmt -> Expression ; #pop
 Expression-stmt -> break ;
 Expression-stmt -> ;
 Selection-stmt -> if ( Expression ) #save Statement else #jpf_save Statement #jp

@@ -15,9 +15,10 @@ def add_block(indx, op, a1, a2="", r=""):
 def gettemp(size=1):
     global last_temp_address, i
     output = str(last_temp_address)
-    add_block(i, 'ASSIGN', '#0', output)
-    i += 1
-    last_temp_address += (4*size)
+    for w in range(0, size):
+        add_block(i, 'ASSIGN', '#0', str(last_temp_address))
+        i += 1
+        last_temp_address += 4
     return output
 
 def add_variable(lexeme, typ, attributes):
@@ -25,7 +26,7 @@ def add_variable(lexeme, typ, attributes):
     if typ == 'int':
         attributes = gettemp()
     elif typ == 'array':
-        attributes = gettemp(attributes)
+        attributes = gettemp(int(attributes))
     symbol_table.append((lexeme, typ, attributes))
 
 def end_scope():
@@ -47,7 +48,7 @@ def findaddr(id):
 
 def code_gen(action, current_token):
     global i, PB, gstack
-    
+    print(action, current_token, gstack)
     if action == '#pid':
         p = findaddr(current_token[1])
         gstack.append(p)
@@ -69,21 +70,21 @@ def code_gen(action, current_token):
 
     elif action == '#setarr':
         size = gstack.pop()
-        add_variable(gstack.pop(), 'array', size)
+        add_variable(gstack.pop(), 'array', size[1:])
 
     elif action == '#assign':
         top = len(gstack) - 1
         add_block(i, 'ASSIGN', gstack[top], gstack[top-1])
         i += 1
         gstack.pop()
-        gstack.pop()
 
     elif action == '#index':
         index = gstack.pop()
         address = gstack.pop()
-        gstack.append(address + 4*index)
+        gstack.append(str(int(address) + 4*int(index[1:]) ))
 
-
+    elif action == '#pop':
+        gstack.pop()
     elif action == '#saveinp':
         gstack.append(current_token[1])
 
