@@ -2,6 +2,7 @@ from scanner import *
 import re
 import operator
 from codegenerator import code_gen, save_code_gen
+
 errors = open('syntax_errors.txt', 'w')
 parse_tree = open('parse_tree.txt', 'w')
 non_terminals_set = set()
@@ -99,7 +100,7 @@ def create_table():
             for terminal in firsts[product]:
                 if terminal != 'ε':
                     ll1_table[non_terminal][terminal] = rule_number
-            if not 'ε' in firsts[product]:
+            if 'ε' not in firsts[product]:
                 break
 
     # handle follows
@@ -107,7 +108,7 @@ def create_table():
     for rule in grammar_production_rules:
         rule_number += 1
         non_terminal = rule[0]
-        if not 'ε' in firsts[non_terminal]:
+        if 'ε' not in firsts[non_terminal]:
             continue
         for terminal in follows[non_terminal]:
             ll1_table[non_terminal][terminal] = rule_number
@@ -129,7 +130,7 @@ def ll1():
     global all_nodes, head_node
     stack = [head_node]
     current_token = get_next_token()
-    is_EOF_error = False
+    eof_error = False
     while True:
         X_node = stack[len(stack) - 1]
         X = X_node.value
@@ -147,7 +148,7 @@ def ll1():
 
         if X[0] == '#':
             code_gen(X, current_token)
-            stack.pop()      
+            stack.pop()
         elif X == 'ε':
             stack.pop()
         elif X == a and a == '$':
@@ -167,7 +168,7 @@ def ll1():
         elif a not in ll1_table[X]:
             if a == '$':
                 handle_error('unexpected EOF')
-                is_EOF_error = True
+                eof_error = True
                 break
             handle_error('illegal ' + a)
             current_token = get_next_token()
@@ -189,7 +190,7 @@ def ll1():
                 node.add_child(new_node)
 
     for node in stack:
-        if node.value == '$' and not is_EOF_error:
+        if node.value == '$' and not eof_error:
             continue
         all_nodes.remove(node)
         try:
@@ -219,25 +220,6 @@ def calculate_depth():
 horizontal_lines = [0]
 
 
-def draw_tree():
-    global horizontal_lines
-    for node in all_nodes:
-        for child in node.children:
-            horizontal_lines.append(child.width)
-        for counter in range(0, node.width - 1):
-            if counter + 1 in horizontal_lines:
-                parse_tree.write('│   ')
-            else:
-                parse_tree.write('    ')
-        if node.width != 0:
-            if node == node.parent.children[0]:
-                parse_tree.write('└── ')
-            else:
-                parse_tree.write('├── ')
-        horizontal_lines.remove(node.width)
-        parse_tree.write(f'{node.show()}\n')
-
-
 if __name__ == '__main__':
 
     split_grammar_rules('pa2grammar.txt')
@@ -250,9 +232,3 @@ if __name__ == '__main__':
     split_grammar_rules('pa3grammar.txt')
     ll1()
     save_code_gen()
-    calculate_depth()
-    all_nodes.sort(key=operator.attrgetter('depth'))
-
-    draw_tree()
-    if no_error:
-        errors.write('There is no syntax error.')

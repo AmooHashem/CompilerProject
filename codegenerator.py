@@ -6,11 +6,14 @@ last_temp_address = 100
 gstack = []
 PB = []
 i = 0
+
+
 def add_block(indx, op, a1, a2="", r=""):
     global PB
     while len(PB) <= indx:
         PB.append("")
     PB[indx] = "(" + op + ', ' + a1 + ', ' + a2 + ', ' + r + ')'
+
 
 def gettemp(size=1):
     global last_temp_address, i
@@ -21,6 +24,7 @@ def gettemp(size=1):
         last_temp_address += 4
     return output
 
+
 def add_variable(lexeme, typ, attributes):
     global symbol_table
     if typ == 'int':
@@ -29,15 +33,18 @@ def add_variable(lexeme, typ, attributes):
         attributes = gettemp(int(attributes))
     symbol_table.append((lexeme, typ, attributes))
 
+
 def end_scope():
     global scope_stack, symbol_table
     top_value = scope_stack.pop()
     while top_value < len(symbol_table):
         symbol_table.pop()
 
+
 def start_scope():
     global scope_stack, symbol_table
     scope_stack.append(len(symbol_table))
+
 
 def findaddr(id):
     global symbol_table
@@ -48,7 +55,7 @@ def findaddr(id):
 
 def code_gen(action, current_token):
     global i, PB, gstack
-    
+
     if action == '#pid':
         p = findaddr(current_token[1])
         gstack.append(p)
@@ -59,7 +66,7 @@ def code_gen(action, current_token):
     elif action == '#mult':
         t = gettemp()
         top = len(gstack) - 1
-        add_block(i, 'MULT', gstack[top], gstack[top-1], t)
+        add_block(i, 'MULT', gstack[top], gstack[top - 1], t)
         i += 1
         gstack.pop()
         gstack.pop()
@@ -74,7 +81,7 @@ def code_gen(action, current_token):
 
     elif action == '#assign':
         top = len(gstack) - 1
-        add_block(i, 'ASSIGN', gstack[top], gstack[top-1])
+        add_block(i, 'ASSIGN', gstack[top], gstack[top - 1])
         i += 1
         gstack.pop()
 
@@ -82,12 +89,12 @@ def code_gen(action, current_token):
         index = gstack.pop()
         address = gstack.pop()
         if index[0] == '#':
-            gstack.append(str(int(address) + 4*int(index[1:]) ))
+            gstack.append(str(int(address) + 4 * int(index[1:])))
         else:
             t = gettemp()
             add_block(i, 'MULT', '#4', index, t)
             i += 1
-            add_block(i, 'ADD', '#'+address, t, t)
+            add_block(i, 'ADD', '#' + address, t, t)
             i += 1
             gstack.append('@' + t)
 
@@ -109,7 +116,7 @@ def code_gen(action, current_token):
         elif op == '<':
             add_block(i, 'LT', first_op, second_op, t)
         elif op == '==':
-            add_block(i, 'EQ', first_op, second_op, t) 
+            add_block(i, 'EQ', first_op, second_op, t)
         gstack.append(t)
         i += 1
 
@@ -127,25 +134,25 @@ def code_gen(action, current_token):
     elif action == '#save':
         gstack.append(i)
         i += 1
-        
+
     elif action == '#jpf_save':
         indx = gstack.pop()
         exp = gstack.pop()
-        add_block(indx, 'JPF',exp, str(i+1))
+        add_block(indx, 'JPF', exp, str(i + 1))
         gstack.append(i)
         i += 1
 
     elif action == '#jp':
         indx = gstack.pop()
         add_block(indx, 'JP', str(i))
-    
+
     elif action == '#label':
         gstack.append(str(i))
 
     elif action == '#while':
         indx = gstack.pop()
         exp = gstack.pop()
-        add_block(indx, 'JPF', exp, str(i+1))
+        add_block(indx, 'JPF', exp, str(i + 1))
         label = gstack.pop()
         add_block(i, 'JP', label)
         i += 1
@@ -155,7 +162,8 @@ def code_gen(action, current_token):
 
     elif action == '#endscope':
         end_scope()
-    
+
+
 def save_code_gen():
     global PB
     output = open('output.txt', 'w')
