@@ -25,7 +25,7 @@ def get_temporary_variables(count=1):
     return output
 
 
-def initialize_identifier(id, type, attributes):
+def initialize_variable(id, type, attributes):
     global symbol_table
     if type == 'int':
         attributes = get_temporary_variables()
@@ -73,11 +73,11 @@ def generate_intermediate_code(action_type, current_token):
         SS.append(t)
 
     elif action_type == '#setvar':
-        initialize_identifier(SS.pop(), 'int', "")
+        initialize_variable(SS.pop(), 'int', "")
 
     elif action_type == '#setarr':
         size = SS.pop()
-        initialize_identifier(SS.pop(), 'array', size[1:])
+        initialize_variable(SS.pop(), 'array', size[1:])
 
     elif action_type == '#assign':
         top = len(SS) - 1
@@ -100,23 +100,23 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#pop':
         SS.pop()
+
     elif action_type == '#saveinp':
         SS.append(current_token[1])
 
-
     elif action_type == '#opperation':
-        second_op = SS.pop()
-        op = SS.pop()
-        first_op = SS.pop()
+        second_operand = SS.pop()
+        operator = SS.pop()
+        first_operand = SS.pop()
         t = get_temporary_variables()
-        if op == '+':
-            add_instruction_to_program_block(i, 'ADD', first_op, second_op, t)
-        elif op == '-':
-            add_instruction_to_program_block(i, 'SUB', first_op, second_op, t)
-        elif op == '<':
-            add_instruction_to_program_block(i, 'LT', first_op, second_op, t)
-        elif op == '==':
-            add_instruction_to_program_block(i, 'EQ', first_op, second_op, t)
+        if operator == '+':
+            add_instruction_to_program_block(i, 'ADD', first_operand, second_operand, t)
+        elif operator == '-':
+            add_instruction_to_program_block(i, 'SUB', first_operand, second_operand, t)
+        elif operator == '<':
+            add_instruction_to_program_block(i, 'LT', first_operand, second_operand, t)
+        elif operator == '==':
+            add_instruction_to_program_block(i, 'EQ', first_operand, second_operand, t)
         SS.append(t)
         i += 1
 
@@ -131,28 +131,29 @@ def generate_intermediate_code(action_type, current_token):
         top_value = SS.pop()
         add_instruction_to_program_block(i, 'PRINT', top_value)
         i += 1
+
     elif action_type == '#save':
         SS.append(i)
         i += 1
 
     elif action_type == '#jpf_save':
-        indx = SS.pop()
-        exp = SS.pop()
-        add_instruction_to_program_block(indx, 'JPF', exp, str(i + 1))
+        index = SS.pop()
+        expression = SS.pop()
+        add_instruction_to_program_block(index, 'JPF', expression, str(i + 1))
         SS.append(i)
         i += 1
 
     elif action_type == '#jp':
-        indx = SS.pop()
-        add_instruction_to_program_block(indx, 'JP', str(i))
+        index = SS.pop()
+        add_instruction_to_program_block(index, 'JP', i)
 
     elif action_type == '#label':
-        SS.append(str(i))
+        SS.append(i)
 
     elif action_type == '#while':
-        indx = SS.pop()
-        exp = SS.pop()
-        add_instruction_to_program_block(indx, 'JPF', exp, str(i + 1))
+        index = SS.pop()
+        expression = SS.pop()
+        add_instruction_to_program_block(index, 'JPF', expression, str(i + 1))
         label = SS.pop()
         add_instruction_to_program_block(i, 'JP', label)
         i += 1
@@ -168,5 +169,4 @@ def save_code_gen():
     global PB
     output = open('output.txt', 'w')
     for i in range(0, len(PB)):
-        output.write(f'{i}\t')
-        output.write(f'{PB[i]}\n')
+        output.write(f'{i}\t{PB[i]}\n')
