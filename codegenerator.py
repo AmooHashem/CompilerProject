@@ -25,7 +25,7 @@ def get_temporary_variables(count=1):
     return output
 
 
-def initialize_variable(id, type, attributes):
+def initialize_variable(id, typpe, attributes):
     global symbol_table
     if typpe == 'int':
         attributes = get_temporary_variables()
@@ -187,14 +187,14 @@ def generate_intermediate_code(action_type, current_token):
         SS[len(SS) -3].append(i)
         i += 1
     
-    elif action_type == 'casedefualt':
+    elif action_type == '#casedefualt':
         accept = SS[len(SS) - 2]
         add_instruction_to_program_block(i, 'ASSIGN', '#1', accept)
         i += 1
         SS[len(SS) -3].append(i)
         i += 1
-    
-    elif action_type == 'endswitch':
+
+    elif action_type == '#endswitch':
         x = SS.pop()
         accept = SS.pop()
         for index in SS[len(SS) - 3]:
