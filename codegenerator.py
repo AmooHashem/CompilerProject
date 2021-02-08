@@ -172,7 +172,9 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#add_function_to_symbol_table':
         attributes = []
+        address = SS.pop()
         function_name = SS.pop()
+        SS.append(address)
         while len(symbol_table) and symbol_table[len(symbol_table) - 1][1] != 'function':
             function_input = symbol_table.pop()
             attributes.append(function_input[2])
