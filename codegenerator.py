@@ -64,10 +64,6 @@ def generate_intermediate_code(action_type, current_token):
     print(symbol_table)
     print()
 
-    if i == 10:
-        print(current_token, '^^^^^^^^^^^^^^')
-        print(action_type, '######################')
-
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
         SS.append(p)
@@ -153,7 +149,7 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#jpf_save':
         index = SS.pop()
         expression = SS.pop()
-        add_instruction_to_program_block(index, 'JPF', expression, f'#{str(i + 1)}')
+        add_instruction_to_program_block(index, 'JPF', expression, str(i + 1))
         SS.append(i)
         i += 1
 
@@ -237,7 +233,7 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#return_address':
         return_value = SS[len(SS) - 2]
-        add_instruction_to_program_block(i, 'JhP', return_value)
+        add_instruction_to_program_block(i, 'JP', f'@{return_value}')
         i = i + 1
 
     elif action_type == '#break':
@@ -250,7 +246,7 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#endbreak':
         index = breaklist.pop()
         while index != 'start':
-            add_instruction_to_program_block(index, 'JP', f'#{i}')
+            add_instruction_to_program_block(index, 'JP', i)
             index = breaklist.pop()
 
     elif action_type == '#return':
@@ -263,7 +259,7 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#endreturn':
         index = returnlist.pop()
         while index != 'start':
-            add_instruction_to_program_block(index, 'JP', f'#{i}')
+            add_instruction_to_program_block(index, 'JP', i)
             index = returnlist.pop()
 
     elif action_type == '#call_function':  # todo: make cleaner
@@ -274,19 +270,31 @@ def generate_intermediate_code(action_type, current_token):
             if isinstance(SS[j], list):
                 function_attributes = SS[j]
         input_size = len(function_attributes) - 3
+        # assign function inputs
         for j in range(input_size):
             add_instruction_to_program_block(i, 'ASSIGN', SS[len(SS) - input_size + j], function_attributes[j + 1])
             i = i + 1
-        add_instruction_to_program_block(i, 'ASSIGN', i + 2, function_attributes[input_size + 1])
+        # assign return address
+        add_instruction_to_program_block(i, 'ASSIGN', f'#{i + 2}', function_attributes[input_size + 1])
         i = i + 1
-        add_instruction_to_program_block(i, 'JP', f'#{function_attributes[0]}')
+        # go  to function
+        add_instruction_to_program_block(i, 'JP', function_attributes[0] + 1)
         i = i + 1
         for j in range(input_size + 1):
             SS.pop()
+        # create a new variable and assign function output to it
         address = get_temporary_variables()
         SS.append(address)
         add_instruction_to_program_block(i, 'ASSIGN', function_attributes[input_size + 2], address)
         i = i + 1
+
+    elif action_type == '#start_from_main':
+        if SS[len(SS) - 1] != 'main':
+            return
+        function_name = SS.pop()
+        index = SS.pop()
+        SS.append(function_name)
+        add_instruction_to_program_block(int(index), 'JP', i)
 
 
 def save_code_gen():

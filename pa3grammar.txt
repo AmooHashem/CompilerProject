@@ -1,4 +1,4 @@
-Program -> #startscope Declaration-list #endscope $
+Program -> #save #startscope Declaration-list #endscope $
 Declaration-list -> Declaration Declaration-list
 Declaration-list -> ε
 Declaration -> Declaration-initial Declaration-prime
@@ -7,7 +7,7 @@ Declaration-prime -> Fun-declaration-prime
 Declaration-prime -> Var-declaration-prime
 Var-declaration-prime -> ; #setvar
 Var-declaration-prime -> [ #pnum NUM ] ; #setarr
-Fun-declaration-prime -> #save ( Params ) Compound-stmt #add_function_to_symbol_table #jp
+Fun-declaration-prime -> #start_from_main ( Params ) #label #init_variable #init_variable #startreturn Compound-stmt #endreturn #return_address #add_function_to_symbol_table
 Type-specifier -> int
 Type-specifier -> void
 Params -> int #saveinp ID #setvar Param-prime Param-list
@@ -33,7 +33,7 @@ Expression-stmt -> break ; #break
 Expression-stmt -> ;
 Selection-stmt -> if ( Expression ) #save Statement else #jpf_save Statement #jp
 Iteration-stmt -> while #label ( Expression ) #startbreak #save Statement #while #endbreak
-Return-stmt -> return Return-stmt-prime
+Return-stmt -> return Return-stmt-prime #assign #return
 Return-stmt-prime -> ;
 Return-stmt-prime -> Expression ;
 Switch-stmt -> switch #startswitch ( Expression ) { #startbreak #startscope Case-stmts Default-stmt #endscope } #endswitch #endbreak
@@ -81,7 +81,7 @@ Var-call-prime -> ( Args #output_in )
 Var-call-prime -> Var-prime
 Var-prime -> [ Expression ] #index
 Var-prime -> ε
-Factor-prime -> ( Args #output_in )
+Factor-prime -> ( Args #output_in ) #call_function
 Factor-prime -> ε
 Factor-zegond -> ( Expression )
 Factor-zegond -> #pnum NUM
