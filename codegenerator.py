@@ -47,6 +47,7 @@ def start_scope():
 
 
 def find_identifier_address(id):
+    print(id, " Eeeeeeeee ")
     global symbol_table
     for row in symbol_table:
         if id == row[0]:
@@ -55,6 +56,11 @@ def find_identifier_address(id):
 
 def generate_intermediate_code(action_type, current_token):
     global i, PB, SS
+
+    print(SS)
+    print(symbol_table)
+    print(current_token)
+    print()
 
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
@@ -163,6 +169,17 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#endscope':
         end_scope()
+
+    elif action_type == '#add_function_to_symbol_table':
+        attributes = []
+        function_name = SS.pop()
+        while len(symbol_table) and symbol_table[len(symbol_table) - 1][1] != 'function':
+            function_input = symbol_table.pop()
+            attributes.append(function_input[2])
+        attributes.reverse()
+        attributes.append(get_temporary_variables())  # for return value
+        attributes.append(get_temporary_variables())  # for return address
+        symbol_table.append((function_name, 'function', attributes))
 
 
 def save_code_gen():
