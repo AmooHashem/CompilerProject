@@ -135,7 +135,7 @@ def ll1():
         X_node = stack[len(stack) - 1]
         X = X_node.value
 
-        print(X)
+        #print(X)
 
         if current_token[0] == 'SYMBOL':
             a = current_token[1]

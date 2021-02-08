@@ -61,8 +61,6 @@ def generate_intermediate_code(action_type, current_token):
     global i, PB, SS, breaklist, returnlist
 
     print(SS)
-    print(symbol_table)
-    print()
 
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
@@ -185,6 +183,7 @@ def generate_intermediate_code(action_type, current_token):
         num = SS.pop()
         accept = SS[len(SS) - 2]
         x = SS[len(SS) - 1]
+        j = i
         add_instruction_to_program_block(i, 'SUB', x, num, t)
         i += 1
         add_instruction_to_program_block(i, 'EQ', t, '#0', t)
@@ -193,22 +192,24 @@ def generate_intermediate_code(action_type, current_token):
         i += 1
         add_instruction_to_program_block(i, 'LT', '#0', t, accept)
         i += 1
-        SS[len(SS) - 3].append(i)
+        SS[len(SS) - 3].append((i, j))
         i += 1
 
     elif action_type == '#casedefualt':
         accept = SS[len(SS) - 2]
+        j = i
         add_instruction_to_program_block(i, 'ASSIGN', '#1', accept)
         i += 1
-        SS[len(SS) - 3].append(i)
+        SS[len(SS) - 3].append((i, j))
         i += 1
 
     elif action_type == '#endswitch':
         x = SS.pop()
         accept = SS.pop()
         caselist = SS.pop()
-        for index in caselist:
-            add_instruction_to_program_block(index, 'JPF', accept, str(i))
+        caselist.append((0, i))
+        for j in range(0, len(caselist) - 1):
+            add_instruction_to_program_block(caselist[j][0], 'JPF', accept, str(caselist[j+1][1]))
 
     elif action_type == '#add_function_to_symbol_table':  # todo: make cleaner
         length = len(SS)
@@ -232,6 +233,8 @@ def generate_intermediate_code(action_type, current_token):
         SS.append(address)
 
     elif action_type == '#return_address':
+        if SS[len(SS) - 4] == 'main':
+            return
         return_value = SS[len(SS) - 2]
         add_instruction_to_program_block(i, 'JP', f'@{return_value}')
         i = i + 1
@@ -250,16 +253,18 @@ def generate_intermediate_code(action_type, current_token):
             index = breaklist.pop()
 
     elif action_type == '#return':
-        returnlist.append(i)
-        i += 1
+        value = SS.pop()
+        returnlist.append((i, value))
+        i += 2
 
     elif action_type == '#startreturn':
-        returnlist.append("start")
+        returnlist.append(("start", 0))
 
     elif action_type == '#endreturn':
         index = returnlist.pop()
-        while index != 'start':
-            add_instruction_to_program_block(index, 'JP', i)
+        while index[0] != 'start':
+            add_instruction_to_program_block(index[0], 'ASSIGN', index[1], SS[len(SS) - 1])
+            add_instruction_to_program_block(index[0] + 1, 'JP', i)
             index = returnlist.pop()
 
     elif action_type == '#call_function':  # todo: make cleaner

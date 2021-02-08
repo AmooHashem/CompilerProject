@@ -33,8 +33,8 @@ Expression-stmt -> break ; #break
 Expression-stmt -> ;
 Selection-stmt -> if ( Expression ) #save Statement else #jpf_save Statement #jp
 Iteration-stmt -> while #label ( Expression ) #startbreak #save Statement #while #endbreak
-Return-stmt -> return Return-stmt-prime #assign #return
-Return-stmt-prime -> ;
+Return-stmt -> return Return-stmt-prime #return
+Return-stmt-prime -> #label ;
 Return-stmt-prime -> Expression ;
 Switch-stmt -> switch #startswitch ( Expression ) { #startbreak #startscope Case-stmts Default-stmt #endscope } #endswitch #endbreak
 Case-stmts -> Case-stmt Case-stmts
