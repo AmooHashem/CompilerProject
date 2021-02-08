@@ -36,11 +36,11 @@ Iteration-stmt -> while #label ( Expression ) #save Statement #while
 Return-stmt -> return Return-stmt-prime
 Return-stmt-prime -> ;
 Return-stmt-prime -> Expression ;
-Switch-stmt -> switch ( Expression ) { Case-stmts Default-stmt }
+Switch-stmt -> switch #startswitch ( Expression ) { Case-stmts Default-stmt } #endswitch
 Case-stmts -> Case-stmt Case-stmts
 Case-stmts -> ε
-Case-stmt -> case NUM : Statement-list
-Default-stmt -> default : Statement-list
+Case-stmt -> case #pnum NUM #case : Statement-list
+Default-stmt -> default #casedefualt : Statement-list
 Default-stmt -> ε
 Expression -> Simple-expression-zegond
 Expression -> #pid ID B

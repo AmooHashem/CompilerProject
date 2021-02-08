@@ -27,11 +27,11 @@ def get_temporary_variables(count=1):
 
 def initialize_variable(id, type, attributes):
     global symbol_table
-    if type == 'int':
+    if typpe == 'int':
         attributes = get_temporary_variables()
-    elif type == 'array':
+    elif typpe == 'array':
         attributes = get_temporary_variables(int(attributes))
-    symbol_table.append((id, type, attributes))
+    symbol_table.append((id, typpe, attributes))
 
 
 def end_scope():
@@ -53,6 +53,7 @@ def find_identifier_address(id):
             return row[2]
 
 
+
 def generate_intermediate_code(action_type, current_token):
     global i, PB, SS
 
@@ -71,7 +72,7 @@ def generate_intermediate_code(action_type, current_token):
         SS.pop()
         SS.pop()
         SS.append(t)
-
+    
     elif action_type == '#setvar':
         initialize_variable(SS.pop(), 'int', "")
 
@@ -163,6 +164,45 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#endscope':
         end_scope()
+
+    elif action_type == '#startswitch':
+        caselist = []
+        accept = get_temporary_variables()
+        SS.append(caselist)
+        SS.append(accept)
+    
+    elif action_type == '#case':
+        t = get_temporary_variables()
+        num = SS.pop()
+        accept = SS[len(SS) - 2]
+        x = SS[len(SS) - 1]
+        add_instruction_to_program_block(i, 'SUB', x, num, t)
+        i += 1
+        add_instruction_to_program_block(i, 'EQ', t, '#0', t)
+        i += 1
+        add_instruction_to_program_block(i, 'ADD', t, accept, t)
+        i += 1
+        add_instruction_to_program_block(i, 'LT', '#0', t, accept)
+        i += 1
+        SS[len(SS) -3].append(i)
+        i += 1
+    
+    elif action_type == 'casedefualt':
+        accept = SS[len(SS) - 2]
+        add_instruction_to_program_block(i, 'ASSIGN', '#1', accept)
+        i += 1
+        SS[len(SS) -3].append(i)
+        i += 1
+    
+    elif action_type == 'endswitch':
+        x = SS.pop()
+        accept = SS.pop()
+        for index in SS[len(SS) - 3]:
+           add_instruction_to_program_block(index, 'JPF', accept, str(i))
+        SS.pop()
+         
+    
+        
 
 
 def save_code_gen():
