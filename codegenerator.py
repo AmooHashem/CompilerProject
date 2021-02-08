@@ -8,6 +8,7 @@ PB = []
 i = 0
 breaklist = []
 
+
 def add_instruction_to_program_block(index, op, a1, a2='', r=''):
     global PB
     while len(PB) <= index:
@@ -47,15 +48,20 @@ def start_scope():
 
 
 def find_identifier_address(id):
+    if id == 'output':
+        return 'output'
     global symbol_table
     for row in symbol_table:
         if id == row[0]:
             return row[2]
 
 
-
 def generate_intermediate_code(action_type, current_token):
     global i, PB, SS, breaklist
+
+    print(SS)
+    print(symbol_table)
+    print()
 
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
@@ -72,7 +78,7 @@ def generate_intermediate_code(action_type, current_token):
         SS.pop()
         SS.pop()
         SS.append(t)
-    
+
     elif action_type == '#setvar':
         initialize_variable(SS.pop(), 'int', "")
 
@@ -129,6 +135,8 @@ def generate_intermediate_code(action_type, current_token):
         SS.append(t)
 
     elif action_type == '#output_in':
+        if SS[len(SS) - 2] != 'output':
+            return
         top_value = SS.pop()
         add_instruction_to_program_block(i, 'PRINT', top_value)
         i += 1
@@ -146,7 +154,7 @@ def generate_intermediate_code(action_type, current_token):
 
     elif action_type == '#jp':
         index = SS.pop()
-        add_instruction_to_program_block(index, 'JP', i)
+        add_instruction_to_program_block(int(index), 'JP', i)
 
     elif action_type == '#label':
         SS.append(i)
@@ -170,7 +178,7 @@ def generate_intermediate_code(action_type, current_token):
         accept = get_temporary_variables()
         SS.append(caselist)
         SS.append(accept)
-    
+
     elif action_type == '#case':
         t = get_temporary_variables()
         num = SS.pop()
@@ -184,14 +192,14 @@ def generate_intermediate_code(action_type, current_token):
         i += 1
         add_instruction_to_program_block(i, 'LT', '#0', t, accept)
         i += 1
-        SS[len(SS) -3].append(i)
+        SS[len(SS) - 3].append(i)
         i += 1
-    
+
     elif action_type == '#casedefualt':
         accept = SS[len(SS) - 2]
         add_instruction_to_program_block(i, 'ASSIGN', '#1', accept)
         i += 1
-        SS[len(SS) -3].append(i)
+        SS[len(SS) - 3].append(i)
         i += 1
 
     elif action_type == '#endswitch':
@@ -200,24 +208,32 @@ def generate_intermediate_code(action_type, current_token):
         caselist = SS.pop()
         for index in caselist:
             add_instruction_to_program_block(index, 'JPF', accept, str(i))
-         
-    elif action_type == '#add_function_to_symbol_table':
+
+    elif action_type == '#add_function_to_symbol_table':  # todo: make cleaner
+        length = len(SS)
         attributes = []
-        address = SS.pop()
-        function_name = SS.pop()
-        SS.append(address)
+        function_name = SS[length - 4]
         while len(symbol_table) and symbol_table[len(symbol_table) - 1][1] != 'function':
             function_input = symbol_table.pop()
             attributes.append(function_input[2])
+        attributes.append(SS[length - 3])
         attributes.reverse()
-        attributes.append(get_temporary_variables())  # for return value
-        attributes.append(get_temporary_variables())  # for return address
+        attributes.append(SS[length - 2])
+        attributes.append(SS[length - 1])
         symbol_table.append((function_name, 'function', attributes))
+        SS.pop()
+        SS.pop()
+        SS.pop()
+        SS.pop()
+
+    elif action_type == '#init_variable':
+        address = get_temporary_variables()
+        SS.append(address)
 
     elif action_type == '#break':
         breaklist.append(i)
         i += 1
-    
+
     elif action_type == '#startbreak':
         breaklist.append("start")
 
