@@ -64,6 +64,11 @@ def generate_intermediate_code(action_type, current_token):
     print(symbol_table)
     print()
 
+    if i == 16:
+        print(action_type)
+        print(current_token)
+        print('___________________')
+
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
         SS.append(p)
@@ -232,6 +237,8 @@ def generate_intermediate_code(action_type, current_token):
         SS.append(address)
 
     elif action_type == '#return_address':
+        if SS[len(SS) - 4] == 'main':
+            return
         return_value = SS[len(SS) - 2]
         add_instruction_to_program_block(i, 'JP', f'@{return_value}')
         i = i + 1
