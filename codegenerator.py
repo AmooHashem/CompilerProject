@@ -230,6 +230,11 @@ def generate_intermediate_code(action_type, current_token):
         address = get_temporary_variables()
         SS.append(address)
 
+    elif action_type == '#return_address':
+        return_value = SS[len(SS) - 2]
+        add_instruction_to_program_block(i, 'JP', f'@{return_value}')
+        i = i + 1
+
     elif action_type == '#break':
         breaklist.append(i)
         i += 1
@@ -243,6 +248,8 @@ def generate_intermediate_code(action_type, current_token):
             add_instruction_to_program_block(index, 'JP', i)
             index = breaklist.pop()
 
+    elif action_type == '#call_function':
+        pass
 
 def save_code_gen():
     global PB
