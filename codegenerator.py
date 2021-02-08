@@ -62,6 +62,11 @@ def generate_intermediate_code(action_type, current_token):
 
     print(SS)
 
+    if i == 16:
+        print(action_type)
+        print(current_token)
+        print('___________________')
+
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
         SS.append(p)
