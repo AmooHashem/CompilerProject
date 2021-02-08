@@ -7,14 +7,14 @@ Declaration-prime -> Fun-declaration-prime
 Declaration-prime -> Var-declaration-prime
 Var-declaration-prime -> ; #setvar
 Var-declaration-prime -> [ #pnum NUM ] ; #setarr
-Fun-declaration-prime -> ( Params ) Compound-stmt
+Fun-declaration-prime -> #save ( Params ) Compound-stmt #add_function_to_symbol_table #jp
 Type-specifier -> int
 Type-specifier -> void
-Params -> int ID Param-prime Param-list
+Params -> int #saveinp ID #setvar Param-prime Param-list
 Params -> void Param-list-void-abtar
 Param-list-void-abtar -> ID Param-prime Param-list
 Param-list-void-abtar -> ε
-Param-list -> , Param Param-list
+Param-list -> , Param #setvar Param-list
 Param-list -> ε
 Param -> Declaration-initial Param-prime
 Param-prime -> [ ]
