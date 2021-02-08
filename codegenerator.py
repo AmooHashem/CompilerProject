@@ -6,7 +6,7 @@ last_temp_address = 100
 SS = []
 PB = []
 i = 0
-
+breaklist = []
 
 def add_instruction_to_program_block(index, op, a1, a2='', r=''):
     global PB
@@ -47,7 +47,6 @@ def start_scope():
 
 
 def find_identifier_address(id):
-    print(id, " Eeeeeeeee ")
     global symbol_table
     for row in symbol_table:
         if id == row[0]:
@@ -56,12 +55,7 @@ def find_identifier_address(id):
 
 
 def generate_intermediate_code(action_type, current_token):
-    global i, PB, SS
-
-    print(SS)
-    print(symbol_table)
-    print(current_token)
-    print()
+    global i, PB, SS, breaklist
 
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
@@ -203,9 +197,9 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#endswitch':
         x = SS.pop()
         accept = SS.pop()
-        for index in SS[len(SS) - 3]:
-           add_instruction_to_program_block(index, 'JPF', accept, str(i))
-        SS.pop()
+        caselist = SS.pop()
+        for index in caselist:
+            add_instruction_to_program_block(index, 'JPF', accept, str(i))
          
     elif action_type == '#add_function_to_symbol_table':
         attributes = []
@@ -219,6 +213,19 @@ def generate_intermediate_code(action_type, current_token):
         attributes.append(get_temporary_variables())  # for return value
         attributes.append(get_temporary_variables())  # for return address
         symbol_table.append((function_name, 'function', attributes))
+
+    elif action_type == '#break':
+        breaklist.append(i)
+        i += 1
+    
+    elif action_type == '#startbreak':
+        breaklist.append("start")
+
+    elif action_type == '#endbreak':
+        index = breaklist.pop()
+        while index != 'start':
+            add_instruction_to_program_block(index, 'JP', i)
+            index = breaklist.pop()
 
 
 def save_code_gen():

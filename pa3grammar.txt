@@ -29,14 +29,14 @@ Statement -> Iteration-stmt
 Statement -> Return-stmt
 Statement -> Switch-stmt
 Expression-stmt -> Expression ; #pop
-Expression-stmt -> break ;
+Expression-stmt -> break ; #break
 Expression-stmt -> ;
 Selection-stmt -> if ( Expression ) #save Statement else #jpf_save Statement #jp
-Iteration-stmt -> while #label ( Expression ) #save Statement #while
+Iteration-stmt -> while #label ( Expression ) #startbreak #save Statement #while #endbreak
 Return-stmt -> return Return-stmt-prime
 Return-stmt-prime -> ;
 Return-stmt-prime -> Expression ;
-Switch-stmt -> switch #startswitch ( Expression ) { Case-stmts Default-stmt } #endswitch
+Switch-stmt -> switch #startswitch ( Expression ) { #startbreak #startscope Case-stmts Default-stmt #endscope } #endswitch #endbreak
 Case-stmts -> Case-stmt Case-stmts
 Case-stmts -> ε
 Case-stmt -> case #pnum NUM #case : Statement-list
