@@ -27,13 +27,16 @@ def get_temporary_variables(count=1):
     return output
 
 
-def initialize_variable(id, typpe, attributes):
-    global symbol_table
-    if typpe == 'int':
-        attributes = get_temporary_variables()
-    elif typpe == 'array':
-        attributes = get_temporary_variables(int(attributes))
-    symbol_table.append((id, typpe, attributes))
+def initialize_variable(id, type, attributes):
+    global symbol_table, i
+    if type == 'int':
+        address = get_temporary_variables()
+    elif type == 'array':
+        address = get_temporary_variables()
+        array = get_temporary_variables(int(attributes))
+        add_instruction_to_program_block(i, 'ASSIGN', f'#{array}', address)
+        i += 1
+    symbol_table.append((id, type, address))
 
 
 def end_scope():
@@ -59,13 +62,6 @@ def find_identifier_address(id):
 
 def generate_intermediate_code(action_type, current_token):
     global i, PB, SS, breaklist, returnlist
-
-    print(SS)
-
-    if i == 16:
-        print(action_type)
-        print(current_token)
-        print('___________________')
 
     if action_type == '#pid':
         p = find_identifier_address(current_token[1])
@@ -97,17 +93,20 @@ def generate_intermediate_code(action_type, current_token):
         SS.pop()
 
     elif action_type == '#index':
+        print(SS)
+        print(":::::::::::::::::::::::::")
         index = SS.pop()
         address = SS.pop()
-        if index[0] == '#':
-            SS.append(str(int(address) + 4 * int(index[1:])))
-        else:
-            t = get_temporary_variables()
-            add_instruction_to_program_block(i, 'MULT', '#4', index, t)
-            i += 1
-            add_instruction_to_program_block(i, 'ADD', '#' + address, t, t)
-            i += 1
-            SS.append('@' + t)
+
+        t1 = get_temporary_variables()
+        add_instruction_to_program_block(i, 'MULT', '#4', index, t1)
+        i += 1
+        t2 = get_temporary_variables()
+        add_instruction_to_program_block(i, 'ASSIGN', f'@{address}', t2)
+        i += 1
+        add_instruction_to_program_block(i, 'ADD', t2, t1, t1)
+        i += 1
+        SS.append('@' + t1)
 
     elif action_type == '#pop':
         SS.pop()
@@ -163,6 +162,9 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#label':
         SS.append(i)
 
+    elif action_type == '#numeric_label':
+        SS.append(f'#{i}')
+
     elif action_type == '#while':
         index = SS.pop()
         expression = SS.pop()
@@ -214,15 +216,19 @@ def generate_intermediate_code(action_type, current_token):
         caselist = SS.pop()
         caselist.append((0, i))
         for j in range(0, len(caselist) - 1):
-            add_instruction_to_program_block(caselist[j][0], 'JPF', accept, str(caselist[j+1][1]))
+            add_instruction_to_program_block(caselist[j][0], 'JPF', accept, str(caselist[j + 1][1]))
+
+    elif action_type == '#start_symbol':
+        symbol_table.append('STOP')
 
     elif action_type == '#add_function_to_symbol_table':  # todo: make cleaner
         length = len(SS)
         attributes = []
         function_name = SS[length - 4]
-        while len(symbol_table) and symbol_table[len(symbol_table) - 1][1] != 'function':
-            function_input = symbol_table.pop()
-            attributes.append(function_input[2])
+        last_object_of_symbol_table = symbol_table.pop()
+        while last_object_of_symbol_table != 'STOP':
+            attributes.append(last_object_of_symbol_table[2])
+            last_object_of_symbol_table = symbol_table.pop()
         attributes.append(SS[length - 3])
         attributes.reverse()
         attributes.append(SS[length - 2])
@@ -263,7 +269,7 @@ def generate_intermediate_code(action_type, current_token):
         i += 2
 
     elif action_type == '#startreturn':
-        returnlist.append(("start", 0))
+        returnlist.append(("start", '#0'))
 
     elif action_type == '#endreturn':
         index = returnlist.pop()
@@ -298,13 +304,24 @@ def generate_intermediate_code(action_type, current_token):
         add_instruction_to_program_block(i, 'ASSIGN', function_attributes[input_size + 2], address)
         i = i + 1
 
-    elif action_type == '#start_from_main':
-        if SS[len(SS) - 1] != 'main':
-            return
-        function_name = SS.pop()
-        index = SS.pop()
-        SS.append(function_name)
-        add_instruction_to_program_block(int(index), 'JP', i)
+    elif action_type == '#special_save':
+        top = SS.pop()
+        SS.append(i)
+        SS.append(top)
+        i += 1
+
+    elif action_type == '#special_save_pair':
+        if symbol_table[len(symbol_table) - 1][0] == 'main':
+            t = get_temporary_variables()
+            add_instruction_to_program_block(SS.pop(), 'ADD', '#0', '#0', t)
+            i += 1
+        else:
+            add_instruction_to_program_block(SS.pop(), 'JP', i)
+
+    print(SS)
+    print(symbol_table)
+    print(action_type)
+    print()
 
 
 def save_code_gen():
