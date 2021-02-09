@@ -1,12 +1,18 @@
-/* === sample 9 ==== */
-int x[10];
-
-int f (int a){
-    int x = 2;
-    return a + x;
+/*===== Sample 1 =====*/
+int foo(int x){
+	if (x < 0){
+		output(x);
+		return 1;
+	}
+	else {
+		output(x);
+		return x + -2;
+	}
 }
-
 void main(void){
-    int w = 3;
-    output(3);
+	int i;	
+	i= foo(0);
+	output(i);
+	i=foo(10);
+	output(i);
 }

@@ -55,7 +55,8 @@ def find_identifier_address(id):
     if id == 'output':
         return 'output'
     global symbol_table
-    for row in symbol_table:
+    for index in range(len(symbol_table) - 1, -1, -1):
+        row = symbol_table[index]
         if id == row[0]:
             return row[2]
 
@@ -93,8 +94,6 @@ def generate_intermediate_code(action_type, current_token):
         SS.pop()
 
     elif action_type == '#index':
-        print(SS)
-        print(":::::::::::::::::::::::::")
         index = SS.pop()
         address = SS.pop()
 
@@ -221,7 +220,7 @@ def generate_intermediate_code(action_type, current_token):
     elif action_type == '#start_symbol':
         symbol_table.append('STOP')
 
-    elif action_type == '#add_function_to_symbol_table':  # todo: make cleaner
+    elif action_type == '#add_function_to_symbol_table':
         length = len(SS)
         attributes = []
         function_name = SS[length - 4]
@@ -317,12 +316,6 @@ def generate_intermediate_code(action_type, current_token):
             i += 1
         else:
             add_instruction_to_program_block(SS.pop(), 'JP', i)
-
-    print(SS)
-    print(symbol_table)
-    print(action_type)
-    print()
-
 
 def save_code_gen():
     global PB
